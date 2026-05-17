@@ -28,19 +28,21 @@ exports.crearRecogida = async (req, res) => {
     }
 
     const recogida = await Recogida.create({
-      usuario_id: req.user.id,
+      usuario_id: req.user?.id || null,
       direccion: direccion.trim(),
       tipo_residuo: tipoResiduo.toLowerCase(),
       descripcion: descripcion || null,
       urgencia: urgencia || 'normal'
     });
 
-    await Auditoria.create({
-      usuario_id: req.user.id,
-      accion: 'CREATE',
-      tabla_afectada: 'recogidas',
-      registro_id: recogida._id
-    });
+    if (req.user?.id) {
+      await Auditoria.create({
+        usuario_id: req.user.id,
+        accion: 'CREATE',
+        tabla_afectada: 'recogidas',
+        registro_id: recogida._id
+      });
+    }
 
     return res.status(201).json({
       success: true,

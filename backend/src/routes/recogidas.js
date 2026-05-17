@@ -6,9 +6,9 @@ const recogidaController = require('../controllers/recogidaController');
 
 router.get('/disponibles', recogidaController.listadoDisponibles);
 
-router.use(verifyToken);
-
 router.post('/', recogidaController.crearRecogida);
+
+router.use(verifyToken);
 
 router.get('/:id', recogidaController.obtenerRecogida);
 
