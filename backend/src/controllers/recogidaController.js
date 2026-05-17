@@ -1,8 +1,19 @@
+const jwt = require('jsonwebtoken');
 const Recogida = require('../models/Recogida');
 const Auditoria = require('../models/Auditoria');
 
 exports.crearRecogida = async (req, res) => {
   try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+        req.user = decoded;
+      } catch (e) {
+        // token inválido o expirado, req.user queda undefined
+      }
+    }
+
     const { direccion, tipoResiduo, descripcion, urgencia } = req.body;
 
     if (!direccion || !tipoResiduo) {
