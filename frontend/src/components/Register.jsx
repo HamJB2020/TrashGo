@@ -71,12 +71,13 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/auth/register', formData);
+      // 1. Hacemos la petición real
+      await api.post('/auth/register', formData);
 
-      setSuccessMessage(
-        `Registro exitoso. Bienvenido, ${response.data.usuario?.username || formData.username}!`
-      );
+      // 2. Mensaje directo usando el estado local (así no dependemos de cómo responda Render)
+      setSuccessMessage(`¡Registro exitoso! Bienvenido, ${formData.username}.`);
 
+      // 3. Limpieza del formulario
       setTimeout(() => {
         setFormData({
           username: '',
@@ -90,16 +91,13 @@ export default function Register() {
     } catch (error) {
       console.error('Error al registrar usuario:', error);
 
-      if (error.response?.data?.error) {
-        setErrorMessage(error.response.data.error);
-      } else if (error.response?.data?.message) {
+      // Control estricto de errores para evitar el fallo #299
+      if (error.response?.data?.message) {
         setErrorMessage(error.response.data.message);
-      } else if (error.message === 'Network Error') {
-        setErrorMessage(
-          'Error de conexión. Verifica tu conexión a internet.'
-        );
+      } else if (error.response?.data?.error) {
+        setErrorMessage(error.response.data.error);
       } else {
-        setErrorMessage('Error desconocido. Intenta nuevamente.');
+        setErrorMessage('Error de comunicación con el servidor de Render.');
       }
     } finally {
       setIsLoading(false);
