@@ -62,14 +62,15 @@ export default function Login({ onLogin }) {
 
     try {
       const response = await api.post('/auth/login', formData);
+      const data = response.data?.data;
 
-      const token = response.data.data.token;
-      const username = response.data.data.usuario.username;
+      if (!data?.token || !data?.usuario?.username) {
+        throw new Error('Respuesta del servidor inválida');
+      }
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('usuario', username);
-
-      onLogin(username);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('usuario', data.usuario.username);
+      onLogin(data.usuario.username);
       navigate('/dashboard');
 
     } catch (error) {

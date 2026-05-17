@@ -74,14 +74,15 @@ export default function Register({ onRegister }) {
 
     try {
       const response = await api.post('/auth/register', formData);
+      const data = response.data?.data;
 
-      const token = response.data.data.token;
-      const username = response.data.data.usuario.username;
+      if (!data?.token || !data?.usuario?.username) {
+        throw new Error('Respuesta del servidor inválida');
+      }
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('usuario', username);
-
-      onRegister(username);
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('usuario', data.usuario.username);
+      onRegister(data.usuario.username);
       navigate('/dashboard');
 
     } catch (error) {

@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const Usuario = require('../models/Usuario');
 
 exports.register = async (req, res) => {
+  let usuario = null;
+
   try {
     const { username, email, password, direccion } = req.body;
 
@@ -18,7 +20,7 @@ exports.register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const usuario = await Usuario.create({
+    usuario = await Usuario.create({
       nombre: username,
       email,
       password: passwordHash,
@@ -37,6 +39,9 @@ exports.register = async (req, res) => {
     });
 
   } catch (error) {
+    if (usuario) {
+      await Usuario.deleteOne({ _id: usuario._id });
+    }
     console.error('Error al registrar:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
