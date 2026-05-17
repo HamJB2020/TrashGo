@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
+require('./config/database');
 
 const app = express();
 
@@ -10,28 +11,22 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
-app.use(express.json({ 
-  limit: '10kb'
-}));
-app.use(express.urlencoded({ 
-  extended: true, 
-  limit: '10kb' 
-}));
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
   next();
 });
 
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK',
-    timestamp: new Date().toISOString()
-  });
+  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+app.use('/api/auth', require('./routes/auth'));
 app.use('/api/recogidas', require('./routes/recogidas'));
+
 app.use('*', (req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     error: 'Ruta no encontrada',
     path: req.path,
     method: req.method
@@ -53,13 +48,13 @@ app.listen(PORT, () => {
   console.log(`Servidor iniciado en puerto ${PORT}`);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   console.error(reason);
   process.exit(1);
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('❌ Excepción no capturada:', error);
+  console.error('Excepción no capturada:', error);
   process.exit(1);
 });
 

@@ -1,27 +1,17 @@
-const { Pool } = require('pg');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME,
-  ssl: {
-    rejectUnauthorized: false
-  },
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
-});
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/trashgo';
 
-pool.on('error', (err) => {
-  console.error(err);
+mongoose.connect(MONGO_URI);
+
+mongoose.connection.on('error', (err) => {
+  console.error('Error de conexión a MongoDB:', err);
   process.exit(-1);
 });
 
-pool.on('connect', () => {
-  console.log('Nueva conexión a base de datos establecida');
+mongoose.connection.once('open', () => {
+  console.log('Conexión a MongoDB establecida');
 });
 
-module.exports = pool;
+module.exports = mongoose;

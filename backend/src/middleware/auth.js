@@ -35,7 +35,7 @@ const verifyToken = (req, res, next) => {
       });
     }
 
-    console.error('❌ Error verificando token:', error);
+    console.error('Error verificando token:', error);
     return res.status(401).json({
       error: 'Error de autenticación',
       code: 'AUTH_ERROR'

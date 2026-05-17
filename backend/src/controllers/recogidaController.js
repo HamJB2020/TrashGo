@@ -1,8 +1,7 @@
-const pool = require('../config/database');
+const Recogida = require('../models/Recogida');
+const Auditoria = require('../models/Auditoria');
 
 exports.crearRecogida = async (req, res) => {
-  const client = await pool.connect();
-  
   try {
     const { direccion, tipoResiduo, descripcion, urgencia } = req.body;
 
@@ -28,108 +27,48 @@ exports.crearRecogida = async (req, res) => {
       });
     }
 
-    await client.query('BEGIN');
+    const recogida = await Recogida.create({
+      usuario_id: req.user.id,
+      direccion: direccion.trim(),
+      tipo_residuo: tipoResiduo.toLowerCase(),
+      descripcion: descripcion || null,
+      urgencia: urgencia || 'normal'
+    });
 
-    const usuarioId = req.user.id;
-    const estado = 'pendiente';
-    const fechaCreacion = new Date().toISOString();
-
-    const queryInsert = `
-      INSERT INTO recogidas (
-        usuario_id, 
-        direccion, 
-        tipo_residuo, 
-        descripcion, 
-        urgencia, 
-        estado, 
-        fecha_creacion
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      RETURNING 
-        id AS recogidaId,
-        estado,
-        fecha_creacion AS createdAt
-    `;
-
-    const resultado = await client.query(queryInsert, [
-      usuarioId,
-      direccion.trim(),
-      tipoResiduo.toLowerCase(),
-      descripcion || null,
-      urgencia || 'normal',
-      estado,
-      fechaCreacion
-    ]);
-
-    const recogida = resultado.rows[0];
-
-    await client.query(`
-      INSERT INTO auditoria (usuario_id, accion, tabla_afectada, registro_id, fecha)
-      VALUES ($1, $2, $3, $4, $5)
-    `, [usuarioId, 'CREATE', 'recogidas', recogida.recogidaId, new Date()]);
-
-    await client.query('COMMIT');
+    await Auditoria.create({
+      usuario_id: req.user.id,
+      accion: 'CREATE',
+      tabla_afectada: 'recogidas',
+      registro_id: recogida._id
+    });
 
     return res.status(201).json({
       success: true,
-      data: recogida,
+      data: {
+        recogidaId: recogida._id,
+        estado: recogida.estado,
+        createdAt: recogida.fecha_creacion
+      },
       mensaje: 'Solicitud de recogida creada exitosamente'
     });
 
   } catch (error) {
-    await client.query('ROLLBACK');
-    
-    console.error('❌ Error al crear recogida:', error);
-
-    if (error.code === '23505') { 
-      return res.status(409).json({
-        error: 'Ya existe una recogida pendiente para este usuario',
-        code: 'DUPLICATE_REQUEST'
-      });
-    }
-
-    if (error.code === '23503') {
-      return res.status(404).json({
-        error: 'Usuario no existe',
-        code: 'USER_NOT_FOUND'
-      });
-    }
-
+    console.error('Error al crear recogida:', error);
     return res.status(500).json({
       error: 'Error interno del servidor al crear recogida',
       code: 'SERVER_ERROR'
     });
-
-  } finally {
-    client.release();
   }
 };
 
-
 exports.obtenerRecogida = async (req, res) => {
   try {
-    const { id } = req.params;
-    const usuarioId = req.user.id;
+    const recogida = await Recogida.findOne({
+      _id: req.params.id,
+      usuario_id: req.user.id
+    });
 
-    const querySelect = `
-      SELECT 
-        id,
-        usuario_id,
-        direccion,
-        tipo_residuo,
-        descripcion,
-        urgencia,
-        estado,
-        fecha_creacion,
-        rider_id,
-        fecha_aceptacion
-      FROM recogidas
-      WHERE id = $1 AND usuario_id = $2
-    `;
-
-    const resultado = await pool.query(querySelect, [id, usuarioId]);
-
-    if (resultado.rows.length === 0) {
+    if (!recogida) {
       return res.status(404).json({
         error: 'Recogida no encontrada o no tienes permisos',
         code: 'NOT_FOUND'
@@ -138,11 +77,11 @@ exports.obtenerRecogida = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: resultado.rows[0]
+      data: recogida
     });
 
   } catch (error) {
-    console.error('❌ Error al obtener recogida:', error);
+    console.error('Error al obtener recogida:', error);
     return res.status(500).json({
       error: 'Error interno del servidor',
       code: 'SERVER_ERROR'
@@ -150,73 +89,51 @@ exports.obtenerRecogida = async (req, res) => {
   }
 };
 
-
 exports.listadoDisponibles = async (req, res) => {
   try {
-    const { 
-      estado = 'pendiente', 
-      tipoResiduo, 
-      pagina = 1, 
-      limite = 20 
-    } = req.query;
-    
-    const offset = (parseInt(pagina) - 1) * parseInt(limite);
+    const { estado = 'pendiente', tipoResiduo, pagina = 1, limite = 20 } = req.query;
+    const skip = (parseInt(pagina) - 1) * parseInt(limite);
 
-    let queryBase = `
-      SELECT 
-        r.id,
-        r.direccion,
-        r.tipo_residuo,
-        r.urgencia,
-        r.estado,
-        r.fecha_creacion,
-        u.nombre AS usuario_nombre,
-        u.telefono AS usuario_telefono
-      FROM recogidas r
-      JOIN usuarios u ON r.usuario_id = u.id
-      WHERE r.estado = $1 AND r.rider_id IS NULL
-    `;
-
-    const params = [estado];
-    let paramIndex = 2;
+    const filtro = { estado, rider_id: null };
 
     if (tipoResiduo) {
-      queryBase += ` AND r.tipo_residuo = $${paramIndex}`;
-      params.push(tipoResiduo.toLowerCase());
-      paramIndex++;
+      filtro.tipo_residuo = tipoResiduo.toLowerCase();
     }
 
-    queryBase += ` ORDER BY r.urgencia DESC, r.fecha_creacion ASC
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+    const [recogidas, total] = await Promise.all([
+      Recogida.find(filtro)
+        .populate('usuario_id', 'nombre telefono')
+        .sort({ urgencia: -1, fecha_creacion: 1 })
+        .skip(skip)
+        .limit(parseInt(limite))
+        .lean(),
+      Recogida.countDocuments(filtro)
+    ]);
 
-    params.push(parseInt(limite), offset);
-
-    const resultado = await pool.query(queryBase, params);
-
-    let queryCount = `SELECT COUNT(*) as total FROM recogidas WHERE estado = $1 AND rider_id IS NULL`;
-    const countParams = [estado];
-    
-    if (tipoResiduo) {
-      queryCount += ` AND tipo_residuo = $2`;
-      countParams.push(tipoResiduo.toLowerCase());
-    }
-
-    const countResult = await pool.query(queryCount, countParams);
-    const total = parseInt(countResult.rows[0].total);
+    const data = recogidas.map(r => ({
+      id: r._id,
+      direccion: r.direccion,
+      tipo_residuo: r.tipo_residuo,
+      urgencia: r.urgencia,
+      estado: r.estado,
+      fecha_creacion: r.fecha_creacion,
+      usuario_nombre: r.usuario_id?.nombre,
+      usuario_telefono: r.usuario_id?.telefono
+    }));
 
     return res.status(200).json({
       success: true,
-      data: resultado.rows,
+      data,
       paginacion: {
         pagina: parseInt(pagina),
         limite: parseInt(limite),
-        total: total,
+        total,
         paginas: Math.ceil(total / parseInt(limite))
       }
     });
 
   } catch (error) {
-    console.error('❌ Error al listar recogidas disponibles:', error);
+    console.error('Error al listar recogidas disponibles:', error);
     return res.status(500).json({
       error: 'Error interno del servidor',
       code: 'SERVER_ERROR'
@@ -224,54 +141,40 @@ exports.listadoDisponibles = async (req, res) => {
   }
 };
 
-
 exports.aceptarRecogida = async (req, res) => {
-  const client = await pool.connect();
-  
   try {
-    const { id } = req.params;
-    const riderId = req.user.id;
+    const recogida = await Recogida.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        rider_id: null,
+        estado: 'pendiente'
+      },
+      {
+        rider_id: req.user.id,
+        estado: 'aceptada',
+        fecha_aceptacion: new Date()
+      },
+      { new: true }
+    );
 
-    await client.query('BEGIN');
-
-    const checkQuery = `
-      SELECT id FROM recogidas 
-      WHERE id = $1 AND rider_id IS NULL AND estado = 'pendiente'
-    `;
-    
-    const checkResult = await client.query(checkQuery, [id]);
-    if (checkResult.rows.length === 0) {
+    if (!recogida) {
       return res.status(409).json({
         error: 'Recogida no disponible (ya fue aceptada)',
         code: 'NOT_AVAILABLE'
       });
     }
 
-    const updateQuery = `
-      UPDATE recogidas 
-      SET rider_id = $1, estado = 'aceptada', fecha_aceptacion = NOW()
-      WHERE id = $2
-      RETURNING id, estado, rider_id
-    `;
-
-    const resultado = await client.query(updateQuery, [riderId, id]);
-    
-    await client.query('COMMIT');
-
     return res.status(200).json({
       success: true,
-      data: resultado.rows[0],
+      data: { id: recogida._id, estado: recogida.estado, rider_id: recogida.rider_id },
       mensaje: 'Solicitud aceptada'
     });
 
   } catch (error) {
-    await client.query('ROLLBACK');
-    console.error('❌ Error al aceptar recogida:', error);
+    console.error('Error al aceptar recogida:', error);
     return res.status(500).json({
       error: 'Error al aceptar recogida',
       code: 'SERVER_ERROR'
     });
-  } finally {
-    client.release();
   }
 };
