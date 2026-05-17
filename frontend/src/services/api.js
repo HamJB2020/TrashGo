@@ -1,13 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
-
-if (!API_BASE_URL) {
-  console.error('API_URL no configurada.');
-  if (process.env.NODE_ENV === 'development') {
-    window.alert('Advertencia: API_URL no configurada.');
-  }
-}
+const API_BASE_URL = 'https://trashgo-backend.onrender.com/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -45,6 +38,12 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export const authService = {
+  register: (datos) => {
+    return apiClient.post('/auth/register', datos);
+  },
+};
 
 export const recogidaService = {
   crear: (datos) => {
