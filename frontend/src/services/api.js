@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Ponemos la URL real directamente sin condicionales ni 'if' que rompan la carga
 const API_URL = "https://trashgo-backend.onrender.com/api";
 
 const api = axios.create({
@@ -10,5 +9,12 @@ const api = axios.create({
   },
 });
 
-// Exportamos la instancia limpia
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export default api;

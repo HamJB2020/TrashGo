@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-export default function Register() {
+export default function Register({ onRegister }) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -71,22 +73,16 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // 1. Hacemos la petición real
-      await api.post('/auth/register', formData);
+      const response = await api.post('/auth/register', formData);
 
-      // 2. Mensaje directo usando el estado local (así no dependemos de cómo responda Render)
-      setSuccessMessage(`¡Registro exitoso! Bienvenido, ${formData.username}.`);
+      const token = response.data.data.token;
+      const username = response.data.data.usuario.username;
 
-      // 3. Limpieza del formulario
-      setTimeout(() => {
-        setFormData({
-          username: '',
-          email: '',
-          password: '',
-          direccion: '',
-        });
-        setSuccessMessage('');
-      }, 3000);
+      localStorage.setItem('token', token);
+      localStorage.setItem('usuario', username);
+
+      onRegister(username);
+      navigate('/dashboard');
 
     } catch (error) {
       console.error('Error al registrar usuario:', error);

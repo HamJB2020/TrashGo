@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-export default function Login() {
+export default function Login({ onLogin }) {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -61,15 +63,14 @@ export default function Login() {
     try {
       const response = await api.post('/auth/login', formData);
 
-      setSuccessMessage('Inicio de sesión exitoso.');
+      const token = response.data.data.token;
+      const username = response.data.data.usuario.username;
 
-      setTimeout(() => {
-        setFormData({
-          email: '',
-          password: '',
-        });
-        setSuccessMessage('');
-      }, 3000);
+      localStorage.setItem('token', token);
+      localStorage.setItem('usuario', username);
+
+      onLogin(username);
+      navigate('/dashboard');
 
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
