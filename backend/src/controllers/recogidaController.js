@@ -143,6 +143,30 @@ exports.listadoDisponibles = async (req, res) => {
   }
 };
 
+exports.obtenerMisRecogidas = async (req, res) => {
+  try {
+    const recogidas = await Recogida.find({ usuario_id: req.user.id })
+      .sort({ fecha_creacion: -1 })
+      .lean();
+
+    const data = recogidas.map(r => ({
+      id: r._id,
+      direccion: r.direccion,
+      tipo_residuo: r.tipo_residuo,
+      descripcion: r.descripcion,
+      urgencia: r.urgencia,
+      estado: r.estado,
+      fecha_creacion: r.fecha_creacion
+    }));
+
+    return res.status(200).json({ success: true, data });
+
+  } catch (error) {
+    console.error('Error al obtener mis recogidas:', error);
+    return res.status(500).json({ error: 'Error interno del servidor', code: 'SERVER_ERROR' });
+  }
+};
+
 exports.aceptarRecogida = async (req, res) => {
   try {
     const recogida = await Recogida.findOneAndUpdate(

@@ -10,6 +10,8 @@ router.post('/', recogidaController.crearRecogida);
 
 router.use(verifyToken);
 
+router.get('/mis-recogidas', recogidaController.obtenerMisRecogidas);
+
 router.get('/:id', recogidaController.obtenerRecogida);
 
 router.put('/:id/aceptar', recogidaController.aceptarRecogida);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import api from '../services/api';
 
-export default function SolicitudRecogidaForm() {
+export default function SolicitudRecogidaForm({ simple }) {
   const [formData, setFormData] = useState({
     direccion: '',
     tipoResiduo: 'mixto',
@@ -101,8 +101,8 @@ export default function SolicitudRecogidaForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className={simple ? '' : 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4'}>
+      <div className={simple ? '' : 'max-w-2xl mx-auto'}>
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800 mb-2">
             🗑️ TrashGo
