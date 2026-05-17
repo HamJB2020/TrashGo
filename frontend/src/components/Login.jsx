@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { authService } from '../services/api';
 
-export default function RegisterForm() {
+export default function Login() {
   const [formData, setFormData] = useState({
-    username: '',
     email: '',
     password: '',
-    direccion: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -17,10 +15,6 @@ export default function RegisterForm() {
   const validarFormulario = () => {
     const nuevosErrores = {};
 
-    if (!formData.username.trim()) {
-      nuevosErrores.username = 'El nombre de usuario es obligatorio';
-    }
-
     if (!formData.email.trim()) {
       nuevosErrores.email = 'El correo electrónico es obligatorio';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -29,12 +23,6 @@ export default function RegisterForm() {
 
     if (!formData.password) {
       nuevosErrores.password = 'La contraseña es obligatoria';
-    } else if (formData.password.length < 6) {
-      nuevosErrores.password = 'La contraseña debe tener al menos 6 caracteres';
-    }
-
-    if (!formData.direccion.trim()) {
-      nuevosErrores.direccion = 'La dirección es obligatoria';
     }
 
     return nuevosErrores;
@@ -71,24 +59,20 @@ export default function RegisterForm() {
     setIsLoading(true);
 
     try {
-      const response = await authService.register(formData);
+      const response = await authService.login(formData);
 
-      setSuccessMessage(
-        `Registro exitoso. Bienvenido, ${response.data.usuario?.username || formData.username}!`
-      );
+      setSuccessMessage('Inicio de sesión exitoso.');
 
       setTimeout(() => {
         setFormData({
-          username: '',
           email: '',
           password: '',
-          direccion: '',
         });
         setSuccessMessage('');
       }, 3000);
 
     } catch (error) {
-      console.error('Error al registrar usuario:', error);
+      console.error('Error al iniciar sesión:', error);
 
       if (error.response?.data?.error) {
         setErrorMessage(error.response.data.error);
@@ -99,7 +83,7 @@ export default function RegisterForm() {
           'Error de conexión. Verifica tu conexión a internet.'
         );
       } else {
-        setErrorMessage('Error desconocido. Intenta nuevamente.');
+        setErrorMessage('Credenciales inválidas. Intenta nuevamente.');
       }
     } finally {
       setIsLoading(false);
@@ -114,7 +98,7 @@ export default function RegisterForm() {
             TrashGo
           </h1>
           <p className="text-lg text-gray-600">
-            Registro de usuario
+            Iniciar sesión
           </p>
         </div>
 
@@ -133,31 +117,6 @@ export default function RegisterForm() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-semibold text-gray-700 mb-2"
-              >
-                Nombre de usuario *
-              </label>
-              <input
-                id="username"
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                placeholder="Ej: juanperez"
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition ${
-                  errors.username
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-300 bg-white'
-                }`}
-              />
-              {errors.username && (
-                <p className="text-red-600 text-sm mt-1">{errors.username}</p>
-              )}
-            </div>
 
             <div>
               <label
@@ -197,7 +156,7 @@ export default function RegisterForm() {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Ingresa tu contraseña"
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition ${
                   errors.password
                     ? 'border-red-500 bg-red-50'
@@ -209,31 +168,6 @@ export default function RegisterForm() {
               )}
             </div>
 
-            <div>
-              <label
-                htmlFor="direccion"
-                className="block text-sm font-semibold text-gray-700 mb-2"
-              >
-                Dirección *
-              </label>
-              <input
-                id="direccion"
-                type="text"
-                name="direccion"
-                value={formData.direccion}
-                onChange={handleInputChange}
-                placeholder="Ej: Calle Principal 123, Madrid"
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition ${
-                  errors.direccion
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-300 bg-white'
-                }`}
-              />
-              {errors.direccion && (
-                <p className="text-red-600 text-sm mt-1">{errors.direccion}</p>
-              )}
-            </div>
-
             <button
               type="submit"
               disabled={isLoading}
@@ -242,10 +176,10 @@ export default function RegisterForm() {
               {isLoading ? (
                 <>
                   <span className="animate-spin">⏳</span>
-                  Registrando...
+                  Iniciando sesión...
                 </>
               ) : (
-                'Registrarse'
+                'Iniciar sesión'
               )}
             </button>
           </form>

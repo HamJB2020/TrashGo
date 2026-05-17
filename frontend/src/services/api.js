@@ -43,6 +43,9 @@ export const authService = {
   register: (datos) => {
     return apiClient.post('/auth/register', datos);
   },
+  login: (datos) => {
+    return apiClient.post('/auth/login', datos);
+  },
 };
 
 export const recogidaService = {
