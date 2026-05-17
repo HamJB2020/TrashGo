@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Forzamos la URL de producción de Render directamente
+// Metemos la URL que te acaba de responder en Google directamente aquí
 const API_URL = "https://trashgo-backend.onrender.com/api";
 
 const api = axios.create({
