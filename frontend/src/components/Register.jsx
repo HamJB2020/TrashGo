@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { authService } from '../services/api';
+import api from '../services/api';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -71,7 +71,7 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      const response = await authService.register(formData);
+      const response = await api.post('/auth/register', formData);
 
       setSuccessMessage(
         `Registro exitoso. Bienvenido, ${response.data.usuario?.username || formData.username}!`

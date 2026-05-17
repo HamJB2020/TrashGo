@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { recogidaService } from '../services/api';
+import api from '../services/api';
 
 export default function SolicitudRecogidaForm() {
   const [formData, setFormData] = useState({
@@ -66,7 +66,7 @@ export default function SolicitudRecogidaForm() {
     setIsLoading(true);
 
     try {
-      const response = await recogidaService.crear(formData);
+      const response = await api.post('/recogidas', formData);
 
       const recogidaId = response.data.data.recogidaId;
       setSuccessMessage(

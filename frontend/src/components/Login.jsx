@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { authService } from '../services/api';
+import api from '../services/api';
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -59,7 +59,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const response = await authService.login(formData);
+      const response = await api.post('/auth/login', formData);
 
       setSuccessMessage('Inicio de sesión exitoso.');
 
