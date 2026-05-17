@@ -1,8 +1,6 @@
-
-'¡0font-family: Arial, sans-serif;
- 
-
-¡margin: 0;
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
     padding: 0;
     background-color: #f7a072; /* Naranja clarito */
     color: #333;
@@ -17,6 +15,7 @@ header {
 
 header h1 {
     margin: 0;
+    text-align: center;
 }
 
 nav ul {
@@ -64,7 +63,8 @@ form label {
 form input[type="text"],
 form input[type="password"],
 form input[type="datetime-local"],
-form select {
+form select,
+form textarea {
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;

@@ -110,54 +110,6 @@ Tarea 03 04/
 
 ---
 
-## Checklist Pre-Entrega
-
-- [ ] Leí todos los documentos 1-5
-- [ ] Entiendo el flujo: request → middleware → controller → BD → response
-- [ ] Puedo explicar por qué cada decisión arquitectónica
-- [ ] Memoricé la desviación en T-07 y cómo defenderla
-- [ ] Sé qué es JWT, transacciones ACID, parámetros preparados
-- [ ] Practicé explicando seguridad (SQL Injection, XSS)
-- [ ] Entiendo los 5 casos de prueba principales
-- [ ] Probé código localmente (opcional pero recomendado)
-
----
-
-## Puntos Clave Para Defender
-
-### 1. Autenticación Segura
-```javascript
-// JWT + bcrypt (línea 50 en auth.js)
-const decoded = jwt.verify(token, process.env.JWT_SECRET);
-// Contraseñas hasheadas, nunca texto plano
-```
-
-### 2. Prevención SQL Injection
-```javascript
-// Parámetros preparados (línea 95 en recogidaController.js)
-VALUES ($1, $2, $3, $4, $5, $6, $7)  // SEGURO
-// vs
-VALUES ('{direccion}', ...)           // INSEGURO (vulnerable)
-```
-
-### 3. Transacciones ACID
-```javascript
-// BEGIN... COMMIT... ROLLBACK (línea 80 en recogidaController.js)
-// Garantiza: Si algo falla, TODO se revierte
-```
-
-### 4. Escalabilidad
-- Pool de conexiones: 20 simultáneas (vs 1 por request)
-- Patrón stateless: Render puede agregar instancias automáticamente
-- Índices en BD: Búsquedas O(log n) en lugar de O(n)
-
-### 5. Testing Profesional
-- Cobertura: 73.5% (>70% recomendado)
-- P-01 a P-05: Casos críticos cubiertos
-- Jest (backend) + Cypress (frontend)
-
----
-
 ## Stack Tecnológico
 
 ### Frontend
@@ -257,7 +209,7 @@ const response = await recogidaService.crear({
 ```javascript
 // Interceptor automático añade token
 config.headers.Authorization = `Bearer ${token}`;
-apiClient.post('/recogidas', datos)
+apiClient.post(\'/recogidas\', datos)
 ```
 
 **3. Backend Express:**
@@ -280,7 +232,7 @@ INSERT INTO recogidas (
   usuario_id,    -- Del JWT
   direccion,
   tipo_residuo,
-  estado,        -- 'pendiente' por defecto
+  estado,        -- \'pendiente\' por defecto
   fecha_creacion -- NOW()
 )
 -- Validaciones CHECK constraints
@@ -297,104 +249,3 @@ INSERT INTO recogidas (
     "createdAt": "2026-05-16T14:30:00Z"
   }
 }
-```
-
----
-
-## Para tu Profesor
-
-**Puntos que Te Destacarán:**
-
-- **Arquitectura profesional:** MVC clara, separación responsabilidades  
-- **Seguridad robusta:** JWT + parámetros preparados + validación 3 niveles  
-- **Testing de calidad:** 73% cobertura, casos críticos cubiertos  
-- **Decisiones justificadas:** Por qué cada patrón, no solo qué implementar  
-- **Escalabilidad demostrada:** Pool conexiones, índices, transacciones  
-- **Desviación gestionada:** T-07 no fue error, fue decisión consciente  
-- **Documentación profesional:** Código comentado, diagramas, explicaciones  
-
----
-
-## Potenciales Preguntas de Profesor
-
-**P1: "¿Por qué transacciones ACID?"**  
-R: "Garantizan consistencia. Si insertar en recogidas OK pero auditoria falla, TODO se revierte. Evita BD en estado inconsistente."
-
-**P2: "¿Cómo proteges contra SQL Injection?"**  
-R: "Parámetros preparados. $1, $2... Los valores se escapan automáticamente. El string del usuario nunca es código SQL."
-
-**P3: "¿Escalas a 1M usuarios?"**  
-R: "Sí. Arquitectura stateless (cualquier servidor puede atender). Pool de conexiones. Índices para O(log n). Render y Supabase escalan automático."
-
-**P4: "¿Por qué desviación en T-07?"**  
-R: "Socket.io requiere refactorización event-driven. Subestimamos 8h. En lugar de crisis, priorizamos MVP funcional. Alternativa: webhooks en UT4."
-
-**P5: "¿Validación solo en cliente?"**  
-R: "No. Cliente para UX, servidor para seguridad. Si bypasean validación JS (dev tools), servidor rechaza. Y BD tiene CHECK constraints."
-
----
-
-## Último Consejo
-
-Antes de tu defensa:
-1. **Practica en voz alta** - Explica código como si lo enseñaras
-2. **Lee el código 2 veces** - No memorices, entiende la lógica
-3. **Piensa en "por qué" antes de "qué"** - Es lo que profesor pregunta
-4. **Prepara ejemplos específicos** - Línea X en archivo Y, no generalidades
-5. **Maneja la desviación con confianza** - No es fracaso, es decisión consciente
-
----
-
-## Soporte Técnico
-
-Si algo no funciona:
-
-1. **Revisa logs del servidor:** `console.error()` en server.js
-2. **Verifica variables de entorno:** `.env` debe existir
-3. **Testea la BD:** Conecta con Supabase CLI, verifica tablas
-4. **Lee el documento 2 o 5** - Tienen más detalles técnicos
-5. **Pregunta al profesor** - Mejor que asumir
-
----
-
-## Resumen Ejecutivo
-
-| Métrica | Target | Actual | Estado |
-|---------|--------|--------|--------|
-| Tareas Completadas | 80% | 90% | Completado |
-| Cobertura Tests | 70% | 73.5% | Completado |
-| Seguridad | JWT + BD | Implementado | Completado |
-| Escalabilidad | Serverless | Demostrada | Completado |
-| Documentación | Completa | 5 documentos | Completado |
-| Código Comentado | Necesario | Sí | Completado |
-
-**Conclusión:** MVP profesional, defendible, escalable. Listo para producción.
-
----
-
-## Calendario Recomendado
-
-- **Semana 1:** Lee docs 1-5 (10h)
-- **Semana 2:** Implementa localmente (15h)
-- **Semana 3:** Testea y practica defensa (10h)
-- **Semana 4:** Sesión oral (30 min)
-
----
-
-**Versión:** 1.0  
-**Fecha:** Mayo 2026  
-**Autor:** Ingeniero de Software Senior (DAW)  
-**Estado:** Listo para defensa
-
-¡Mucho éxito en tu presentación!
-
----
-
-### Navegación Rápida
-
-- [Product Backlog →](1_PRODUCT_BACKLOG_UT3.1.md)  
-- [Arquitectura Backend →](2_ARQUITECTURA_BACKEND_UT3.3.md)  
-- [Código Frontend →](3_CODIGO_FRONTEND_UT3.3.md)  
-- [Testing →](4_CASOS_PRUEBA_UT3.4.md)  
-- [Base de Datos →](5_DIAGRAMA_BD_Y_SCRIPTS_SQL.md)  
-- [Guía de Defensa →](GUIA_DEFENSA_Y_IMPLEMENTACION.md)
