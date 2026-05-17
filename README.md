@@ -1,32 +1,32 @@
-# 🗑️ TrashGo - MVP Completo UT3 y UT4
+# TrashGo - MVP Completo UT3 y UT4
 
-## Bienvenida 👋
+## Introducción
 
-Este es tu MVP profesional y documentación completa para las Unidades de Trabajo 3 y 4 de tu Proyecto Integrador.
+Este es el MVP profesional y documentación completa para las Unidades de Trabajo 3 y 4 del Proyecto Integrador.
 
 **Stack:** React.js + Node.js/Express + PostgreSQL  
 **Despliegue:** Vercel + Render + Supabase  
-**Estado:** ✅ Listo para defensa oral  
+**Estado:** Listo para defensa oral  
 
 ---
 
-## 📂 Estructura de Carpetas
+## Estructura de Carpetas
 
 ```
 Tarea 03 04/
 │
-├── 📄 README.md (este archivo)
+├── README.md (este archivo)
 │
-├── 📋 DOCUMENTACIÓN TÉCNICA
+├── DOCUMENTACIÓN TÉCNICA
 │   ├── 1_PRODUCT_BACKLOG_UT3.1.md          ← Apartado 3.1 de memoria
 │   ├── 2_ARQUITECTURA_BACKEND_UT3.3.md     ← Apartado 3.3 Backend
 │   ├── 3_CODIGO_FRONTEND_UT3.3.md          ← Apartado 3.3 Frontend
 │   ├── 4_CASOS_PRUEBA_UT3.4.md             ← Apartado 3.4 Testing
 │   ├── 5_DIAGRAMA_BD_Y_SCRIPTS_SQL.md      ← Base de datos
-│   ├── 6_GESTION_RIESGOS_E_INCIDENCIAS_UT3.4.md  ← SEGURIDAD (⭐ IMPORTANTE)
+│   ├── 6_GESTION_RIESGOS_E_INCIDENCIAS_UT3.4.md  ← SEGURIDAD (IMPORTANTE)
 │   └── GUIA_DEFENSA_Y_IMPLEMENTACION.md    ← Cómo defenderse
 │
-├── 💻 CÓDIGO BACKEND
+├── CÓDIGO BACKEND
 │   └── backend/src/
 │       ├── controllers/recogidaController.js
 │       ├── middleware/auth.js
@@ -34,18 +34,18 @@ Tarea 03 04/
 │       ├── config/database.js
 │       └── server.js
 │
-├── 🎨 CÓDIGO FRONTEND
+├── CÓDIGO FRONTEND
 │   └── frontend/src/
 │       ├── services/api.js
 │       └── components/SolicitudRecogidaForm.jsx
 │
-└── 📊 EXTRA
+└── EXTRA
     └── (estructura de carpetas /backend y /frontend para copiar)
 ```
 
 ---
 
-## 🚀 Inicio Rápido (Qué Leer Primero)
+## Inicio Rápido (Qué Leer Primero)
 
 ### Opción A: Entender el Proyecto (5 minutos)
 
@@ -74,7 +74,7 @@ Tarea 03 04/
 
 ---
 
-## 📚 Documentación por Apartado de Memoria
+## Documentación por Apartado de Memoria
 
 | Apartado | Documento | Contenido |
 |----------|-----------|-----------|
@@ -86,10 +86,10 @@ Tarea 03 04/
 
 ---
 
-## 🎯 Preguntas Frecuentes (FAQ)
+## Preguntas Frecuentes (FAQ)
 
 ### P: ¿Puedo copiar este código directamente?
-**R:** Sí, está 100% listo para producción. Solo cambiar credenciales en `.env`.
+**R:** Sí, está listo para producción. Solo cambiar credenciales en `.env`.
 
 ### P: ¿Qué pasa si no tengo Supabase?
 **R:** Cualquier PostgreSQL funciona. Solo cambiar `DB_HOST` en `.env`.
@@ -110,7 +110,7 @@ Tarea 03 04/
 
 ---
 
-## ✅ Checklist Pre-Entrega
+## Checklist Pre-Entrega
 
 - [ ] Leí todos los documentos 1-5
 - [ ] Entiendo el flujo: request → middleware → controller → BD → response
@@ -123,7 +123,7 @@ Tarea 03 04/
 
 ---
 
-## 🔑 Puntos Clave Para Defender
+## Puntos Clave Para Defender
 
 ### 1. Autenticación Segura
 ```javascript
@@ -135,9 +135,9 @@ const decoded = jwt.verify(token, process.env.JWT_SECRET);
 ### 2. Prevención SQL Injection
 ```javascript
 // Parámetros preparados (línea 95 en recogidaController.js)
-VALUES ($1, $2, $3, $4, $5, $6, $7)  // ✅ SEGURO
+VALUES ($1, $2, $3, $4, $5, $6, $7)  // SEGURO
 // vs
-VALUES ('{direccion}', ...)           // ❌ INSEGURO (vulnerable)
+VALUES ('{direccion}', ...)           // INSEGURO (vulnerable)
 ```
 
 ### 3. Transacciones ACID
@@ -158,7 +158,7 @@ VALUES ('{direccion}', ...)           // ❌ INSEGURO (vulnerable)
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnológico
 
 ### Frontend
 ```
@@ -204,7 +204,7 @@ BD: Supabase (managed PostgreSQL)
 
 ---
 
-## 📖 Estructura de Cada Documento
+## Estructura de Cada Documento
 
 ### 1. Product Backlog (UT3.1)
 - Tabla 10 tareas: ID, descripción, HU, estimación, estado
@@ -240,7 +240,7 @@ BD: Supabase (managed PostgreSQL)
 
 ---
 
-## 💡 Ejemplos Reales de Uso
+## Ejemplos Reales de Uso
 
 ### Crear Solicitud (Flujo Completo)
 
@@ -301,21 +301,21 @@ INSERT INTO recogidas (
 
 ---
 
-## 🎓 Para tu Profesor
+## Para tu Profesor
 
 **Puntos que Te Destacarán:**
 
-✅ **Arquitectura profesional:** MVC clara, separación responsabilidades  
-✅ **Seguridad robusta:** JWT + parámetros preparados + validación 3 niveles  
-✅ **Testing de calidad:** 73% cobertura, casos críticos covered  
-✅ **Decisiones justificadas:** Por qué cada patrón, no solo qué implementar  
-✅ **Escalabilidad demostrada:** Pool conexiones, índices, transacciones  
-✅ **Desviación gestionada:** T-07 no fue error, fue decisión consciente  
-✅ **Documentación profesional:** Código comentado, diagramas, explicaciones  
+- **Arquitectura profesional:** MVC clara, separación responsabilidades  
+- **Seguridad robusta:** JWT + parámetros preparados + validación 3 niveles  
+- **Testing de calidad:** 73% cobertura, casos críticos cubiertos  
+- **Decisiones justificadas:** Por qué cada patrón, no solo qué implementar  
+- **Escalabilidad demostrada:** Pool conexiones, índices, transacciones  
+- **Desviación gestionada:** T-07 no fue error, fue decisión consciente  
+- **Documentación profesional:** Código comentado, diagramas, explicaciones  
 
 ---
 
-## 🚨 Potenciales Preguntas de Profesor
+## Potenciales Preguntas de Profesor
 
 **P1: "¿Por qué transacciones ACID?"**  
 R: "Garantizan consistencia. Si insertar en recogidas OK pero auditoria falla, TODO se revierte. Evita BD en estado inconsistente."
@@ -334,7 +334,7 @@ R: "No. Cliente para UX, servidor para seguridad. Si bypasean validación JS (de
 
 ---
 
-## 🎯 Último Consejo
+## Último Consejo
 
 Antes de tu defensa:
 1. **Practica en voz alta** - Explica código como si lo enseñaras
@@ -345,7 +345,7 @@ Antes de tu defensa:
 
 ---
 
-## 📞 Soporte Técnico
+## Soporte Técnico
 
 Si algo no funciona:
 
@@ -357,22 +357,22 @@ Si algo no funciona:
 
 ---
 
-## 📊 Resumen Ejecutivo
+## Resumen Ejecutivo
 
-| Métrica | Target | Actual | ✅/❌ |
+| Métrica | Target | Actual | Estado |
 |---------|--------|--------|--------|
-| Tareas Completadas | 80% | 90% | ✅ |
-| Cobertura Tests | 70% | 73.5% | ✅ |
-| Seguridad | JWT + BD | Implementado | ✅ |
-| Escalabilidad | Serverless | Demostrada | ✅ |
-| Documentación | Completa | 5 documentos | ✅ |
-| Código Comentado | Necesario | Sí | ✅ |
+| Tareas Completadas | 80% | 90% | Completado |
+| Cobertura Tests | 70% | 73.5% | Completado |
+| Seguridad | JWT + BD | Implementado | Completado |
+| Escalabilidad | Serverless | Demostrada | Completado |
+| Documentación | Completa | 5 documentos | Completado |
+| Código Comentado | Necesario | Sí | Completado |
 
-**Conclusión:** MVP profesional, defendible, escalable. **LISTO PARA PRODUCCIÓN** ✅
+**Conclusión:** MVP profesional, defendible, escalable. Listo para producción.
 
 ---
 
-## 📅 Calendario Recomendado
+## Calendario Recomendado
 
 - **Semana 1:** Lee docs 1-5 (10h)
 - **Semana 2:** Implementa localmente (15h)
@@ -384,18 +384,17 @@ Si algo no funciona:
 **Versión:** 1.0  
 **Fecha:** Mayo 2026  
 **Autor:** Ingeniero de Software Senior (DAW)  
-**Estado:** ✅ LISTO PARA DEFENSA
+**Estado:** Listo para defensa
 
-¡Mucho éxito en tu presentación! 🚀
+¡Mucho éxito en tu presentación!
 
 ---
 
 ### Navegación Rápida
 
-📌 [Product Backlog →](1_PRODUCT_BACKLOG_UT3.1.md)  
-📌 [Arquitectura Backend →](2_ARQUITECTURA_BACKEND_UT3.3.md)  
-📌 [Código Frontend →](3_CODIGO_FRONTEND_UT3.3.md)  
-📌 [Testing →](4_CASOS_PRUEBA_UT3.4.md)  
-📌 [Base de Datos →](5_DIAGRAMA_BD_Y_SCRIPTS_SQL.md)  
-📌 [Guía de Defensa →](GUIA_DEFENSA_Y_IMPLEMENTACION.md)
-
+- [Product Backlog →](1_PRODUCT_BACKLOG_UT3.1.md)  
+- [Arquitectura Backend →](2_ARQUITECTURA_BACKEND_UT3.3.md)  
+- [Código Frontend →](3_CODIGO_FRONTEND_UT3.3.md)  
+- [Testing →](4_CASOS_PRUEBA_UT3.4.md)  
+- [Base de Datos →](5_DIAGRAMA_BD_Y_SCRIPTS_SQL.md)  
+- [Guía de Defensa →](GUIA_DEFENSA_Y_IMPLEMENTACION.md)
