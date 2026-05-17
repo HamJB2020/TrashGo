@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Metemos la URL que te acaba de responder en Google directamente aquí
+// Ponemos la URL real directamente sin condicionales ni 'if' que rompan la carga
 const API_URL = "https://trashgo-backend.onrender.com/api";
 
 const api = axios.create({
@@ -10,4 +10,5 @@ const api = axios.create({
   },
 });
 
+// Exportamos la instancia limpia
 export default api;
