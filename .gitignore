@@ -1,3 +1,6 @@
 *.md
 *.sh
 !README.md
+frontend.rar
+.gitignore
+frontend.zip
