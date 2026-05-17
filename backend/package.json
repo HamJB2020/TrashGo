@@ -20,7 +20,7 @@
     "api",
     "rest"
   ],
-  "author": "Tu Nombre",
+  "author": "HamJB2020",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.2",
