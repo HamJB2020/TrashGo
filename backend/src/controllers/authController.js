@@ -12,7 +12,8 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: 'username, email y password son obligatorios' });
     }
 
-    const existe = await Usuario.findOne({ email });
+    const emailLower = email.toLowerCase();
+    const existe = await Usuario.findOne({ email: emailLower });
     if (existe) {
       return res.status(409).json({ error: 'El email ya está registrado' });
     }
@@ -22,7 +23,7 @@ exports.register = async (req, res) => {
 
     usuario = await Usuario.create({
       nombre: username,
-      email,
+      email: emailLower,
       password: passwordHash,
       direccion
     });
@@ -42,8 +43,11 @@ exports.register = async (req, res) => {
     if (usuario) {
       await Usuario.deleteOne({ _id: usuario._id });
     }
+    const msg = error.name === 'MongooseError' || error.name === 'MongooseServerSelectionError'
+      ? 'Base de datos no disponible'
+      : 'Error interno del servidor';
     console.error('Error al registrar:', error);
-    return res.status(500).json({ error: 'Error interno del servidor' });
+    return res.status(500).json({ error: msg });
   }
 };
 
@@ -55,7 +59,7 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'email y password son obligatorios' });
     }
 
-    const usuario = await Usuario.findOne({ email });
+    const usuario = await Usuario.findOne({ email: email.toLowerCase() });
     if (!usuario) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
@@ -77,7 +81,10 @@ exports.login = async (req, res) => {
     });
 
   } catch (error) {
+    const msg = error.name === 'MongooseError' || error.name === 'MongooseServerSelectionError'
+      ? 'Base de datos no disponible'
+      : 'Error interno del servidor';
     console.error('Error al iniciar sesión:', error);
-    return res.status(500).json({ error: 'Error interno del servidor' });
+    return res.status(500).json({ error: msg });
   }
 };
