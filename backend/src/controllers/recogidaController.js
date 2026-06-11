@@ -54,7 +54,8 @@ exports.crearRecogida = async (req, res) => {
       descripcion: descripcion || null,
       urgencia: urgencia || 'normal',
       fecha_programada: req.body.fechaProgramada || null,
-      coste: req.body.coste || 0
+      coste: req.body.coste || 0,
+      peso: req.body.peso || 1
     });
 
     if (req.user?.id) {
@@ -160,6 +161,7 @@ exports.listadoDisponibles = async (req, res) => {
       fecha_creacion: r.fecha_creacion,
       coste: r.coste,
       pagado: r.pagado,
+      peso: r.peso,
       usuario_nombre: r.usuario_id?.nombre,
       usuario_telefono: r.usuario_id?.telefono
     }));
@@ -202,7 +204,8 @@ exports.obtenerMisRecogidas = async (req, res) => {
       fecha_creacion: r.fecha_creacion,
       fecha_programada: r.fecha_programada,
       coste: r.coste,
-      pagado: r.pagado
+      pagado: r.pagado,
+      peso: r.peso
     }));
 
     return res.status(200).json({ success: true, data });
@@ -248,5 +251,22 @@ exports.aceptarRecogida = async (req, res) => {
       error: 'Error al aceptar recogida',
       code: 'SERVER_ERROR'
     });
+  }
+};
+
+exports.cancelarRecogida = async (req, res) => {
+  try {
+    const recogida = await Recogida.findOneAndUpdate(
+      { _id: req.params.id, usuario_id: req.user.id, estado: 'pendiente', pagado: false },
+      { estado: 'cancelada' },
+      { new: true }
+    );
+    if (!recogida) {
+      return res.status(404).json({ error: 'No se puede cancelar. La solicitud no existe, ya fue pagada o ya está en proceso.', code: 'NOT_FOUND' });
+    }
+    return res.status(200).json({ success: true, data: { id: recogida._id, estado: recogida.estado }, mensaje: 'Solicitud cancelada' });
+  } catch (error) {
+    console.error('Error al cancelar recogida:', error);
+    return res.status(500).json({ error: 'Error interno del servidor', code: 'SERVER_ERROR' });
   }
 };

@@ -62,6 +62,15 @@ export default function SolicitudesPage() {
     }
   };
 
+  const handleCancelar = async (id) => {
+    try {
+      await api.put(`/recogidas/${id}/cancelar`);
+      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, estado: 'cancelada' } : s));
+    } catch (err) {
+      console.error('Error al cancelar:', err);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (cargando.current) return;
@@ -149,10 +158,16 @@ export default function SolicitudesPage() {
                     </MapContainer>
                   </div>
                 )}
+                {sol.peso && <p className="text-sm text-gray-400 mt-2">Peso: {sol.peso} kg</p>}
                 {sol.estado === 'pendiente' && !sol.pagado && sol.coste > 0 && (
-                  <button onClick={() => setPagarSolicitud(sol)} className="mt-4 w-full bg-bosque-600 text-white font-semibold py-3 rounded-lg hover:bg-bosque-700 transition text-base">
-                    Pagar {sol.coste.toFixed(2)} €
-                  </button>
+                  <div className="flex gap-3 mt-4">
+                    <button onClick={() => setPagarSolicitud(sol)} className="flex-1 bg-bosque-600 text-white font-semibold py-3 rounded-lg hover:bg-bosque-700 transition text-base">
+                      Pagar {sol.coste.toFixed(2)} €
+                    </button>
+                    <button onClick={() => handleCancelar(sol.id)} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                      Cancelar
+                    </button>
+                  </div>
                 )}
                 {sol.pagado && <span className="mt-3 text-base text-green-600 font-semibold block">✓ Pagado</span>}
               </div>

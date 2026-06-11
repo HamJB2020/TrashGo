@@ -42,13 +42,12 @@ async function reverseGeocode(lat, lng) {
       const calle = [a.road, a.house_number].filter(Boolean).join(', ');
       const ciudad = a.city || a.town || a.village || a.municipality || a.county || '';
       const pais = a.country || '';
-      return { calle, ciudad, pais };
+      const valido = (a.road || a.city || a.town || a.village || a.municipality || a.county) && (ciudad || calle);
+      return { calle, ciudad, pais, valido };
     }
-    const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    return { calle: fallback, ciudad: '', pais: '' };
+    return { calle: '', ciudad: '', pais: '', valido: false };
   } catch {
-    const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    return { calle: fallback, ciudad: '', pais: '' };
+    return { calle: '', ciudad: '', pais: '', valido: false };
   }
 }
 
@@ -83,7 +82,6 @@ async function geocodeAddress(direccion) {
 export default function Register() {
   const navigate = useNavigate();
   const [posicion, setPosicion] = useState(null);
-  const [buscandoDir, setBuscandoDir] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -109,15 +107,19 @@ export default function Register() {
 
   const manejarMovimientoPin = async (lat, lng) => {
     setPosicion([lat, lng]);
-    setBuscandoDir(true);
     const addr = await reverseGeocode(lat, lng);
-    setFormData(prev => ({ ...prev, calle: addr.calle, ciudad: addr.ciudad, pais: addr.pais }));
-    setBuscandoDir(false);
+    if (addr.valido) {
+      setFormData(prev => ({ ...prev, calle: addr.calle, ciudad: addr.ciudad, pais: addr.pais }));
+      setErrors(prev => ({ ...prev, direccion: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, calle: '', ciudad: '', pais: '' }));
+      setPosicion(null);
+      setErrors(prev => ({ ...prev, direccion: 'Ubicación no válida. Selecciona una zona habitada.' }));
+    }
   };
 
   const handleAddressBlur = async () => {
     if (!formData.calle.trim() || posicion) return;
-    setBuscandoDir(true);
     const q = [formData.calle, formData.numero, formData.ciudad].filter(Boolean).join(', ');
     const result = await geocodeAddress(q);
     if (result) {
@@ -127,7 +129,6 @@ export default function Register() {
     } else {
       setErrors(prev => ({ ...prev, direccion: 'Dirección no encontrada. Coloca un pin en el mapa.' }));
     }
-    setBuscandoDir(false);
   };
 
   const direccionCompleta = () => {
@@ -170,7 +171,6 @@ export default function Register() {
       const payload = { ...formData, direccion: direccionCompleta() };
       delete payload.calle; delete payload.numero; delete payload.ciudad; delete payload.pais;
       await api.post('/auth/register', payload);
-      localStorage.setItem('direccion_predeterminada', direccionCompleta());
       setSuccessMessage('Registrado correctamente. Redirigiendo al inicio de sesión...');
       setTimeout(() => navigate('/login'), 5000);
     } catch (error) {

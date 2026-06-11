@@ -41,13 +41,12 @@ async function reverseGeocode(lat, lng) {
       const calle = [a.road, a.house_number].filter(Boolean).join(', ');
       const ciudad = a.city || a.town || a.village || a.municipality || a.county || '';
       const pais = a.country || '';
-      return { calle, ciudad, pais };
+      const valido = (a.road || a.city || a.town || a.village || a.municipality || a.county) && (ciudad || calle);
+      return { calle, ciudad, pais, valido };
     }
-    const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    return { calle: fallback, ciudad: '', pais: '' };
+    return { calle: '', ciudad: '', pais: '', valido: false };
   } catch {
-    const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-    return { calle: fallback, ciudad: '', pais: '' };
+    return { calle: '', ciudad: '', pais: '', valido: false };
   }
 }
 
@@ -97,13 +96,14 @@ function calcularCoste(tipos, cuando, urgencia) {
 
 export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   const [posicion, setPosicion] = useState(null);
-  const [buscandoDir, setBuscandoDir] = useState(false);
+  const dirDefault = localStorage.getItem('direccion_predeterminada') || '';
   const [formData, setFormData] = useState({
-    calle: '',
+    calle: dirDefault,
     numero: '',
     ciudad: '',
     pais: '',
     piso: '',
+    peso: 1,
     tipoResiduo: [],
     descripcion: '',
     urgencia: 'normal',
@@ -132,21 +132,40 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
   const manejarMovimientoPin = useCallback(async (lat, lng) => {
     setPosicion([lat, lng]);
-    setBuscandoDir(true);
     const addr = await reverseGeocode(lat, lng);
-    setFormData(prev => ({ ...prev, calle: addr.calle, ciudad: addr.ciudad, pais: addr.pais }));
-    setBuscandoDir(false);
+    if (addr.valido) {
+      setFormData(prev => ({ ...prev, calle: addr.calle, ciudad: addr.ciudad, pais: addr.pais }));
+      setErrors(prev => ({ ...prev, direccion: '' }));
+    } else {
+      setFormData(prev => ({ ...prev, calle: '', ciudad: '', pais: '' }));
+      setPosicion(null);
+      setErrors(prev => ({ ...prev, direccion: 'Ubicación no válida. Selecciona una zona habitada.' }));
+    }
   }, []);
 
   const calcularFechaProgramada = useCallback(() => {
     const ahora = new Date();
+    const h = ahora.getHours();
+    const m = ahora.getMinutes();
     if (cuando === 'hoy') {
+      if (h < 9) {
+        const d = new Date(ahora); d.setHours(9, 0, 0, 0); return d;
+      }
+      if (h >= 18 || (h === 17 && m > 30)) {
+        const manana = new Date(ahora);
+        manana.setDate(manana.getDate() + 1);
+        manana.setHours(9, 0, 0, 0);
+        return manana;
+      }
+      if (h >= 14 && h < 16) {
+        const d = new Date(ahora); d.setHours(16, 0, 0, 0); return d;
+      }
       return new Date(ahora.getTime() + 3 * 60 * 60 * 1000);
     }
     if (cuando === 'manana') {
       const m = new Date(ahora);
       m.setDate(m.getDate() + 1);
-      m.setHours(10, 0, 0, 0);
+      m.setHours(9, 0, 0, 0);
       return m;
     }
     if (cuando === 'custom' && fechaCustom) {
@@ -168,7 +187,6 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
   const handleAddressBlur = useCallback(async () => {
     if (!formData.calle.trim() || posicion) return;
-    setBuscandoDir(true);
     const q = [formData.calle, formData.numero, formData.ciudad].filter(Boolean).join(', ');
     const result = await geocodeAddress(q);
     if (result) {
@@ -178,7 +196,6 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     } else {
       setErrors(prev => ({ ...prev, direccion: 'Dirección no encontrada. Coloca un pin en el mapa.' }));
     }
-    setBuscandoDir(false);
   }, [formData.calle, formData.numero, formData.ciudad, posicion]);
 
   const validarFormulario = () => {
@@ -187,6 +204,8 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
       nuevosErrores.direccion = 'Coloca un pin en el mapa o escribe una dirección válida';
     }
     if (!formData.calle.trim()) nuevosErrores.calle = 'La calle es obligatoria';
+    if (!formData.peso || formData.peso < 1) nuevosErrores.peso = 'El peso mínimo es 1 kg';
+    else if (formData.peso > 50) nuevosErrores.peso = 'No recogemos más de 50 kg';
     if (cuando === 'custom' && !fechaCustom) {
       nuevosErrores.fechaCustom = 'Selecciona una fecha y hora';
     }
@@ -229,6 +248,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
         urgencia: formData.urgencia,
         fechaProgramada: calcularFechaProgramada(),
         coste,
+        peso: formData.peso,
       };
 
       await api.post('/recogidas', body);
@@ -236,7 +256,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
       if (guardarDir) localStorage.setItem('direccion_predeterminada', direccionCompleta());
 
       setSuccessMessage('Solicitud creada. Venimos en ' + formatearCuentaAtras(calcularFechaProgramada()));
-      setFormData({ calle: '', numero: '', ciudad: '', pais: '', piso: '', tipoResiduo: [], descripcion: '', urgencia: 'normal' });
+      setFormData({ calle: '', numero: '', ciudad: '', pais: '', piso: '', peso: 1, tipoResiduo: [], descripcion: '', urgencia: 'normal' });
       setCuando('hoy');
       setFechaCustom('');
       setPosicion(null);
@@ -321,6 +341,16 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                   placeholder="Piso / Puerta / Bloque (opcional)"
                   className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500"
                 />
+              </div>
+
+              <div className="mt-2">
+                <label className="block text-xs font-semibold text-gray-600 mb-1">Peso aproximado</label>
+                <div className="flex items-center gap-3">
+                  <input type="range" min="1" max="50" value={formData.peso} onChange={(e) => setFormData(prev => ({ ...prev, peso: parseInt(e.target.value) }))}
+                    className="flex-1 accent-bosque-600" />
+                  <span className="text-sm font-bold text-bosque-700 min-w-[4rem] text-right">{formData.peso} kg</span>
+                </div>
+                {errors.peso && <p className="text-red-600 text-xs mt-1">{errors.peso}</p>}
               </div>
 
               {errors.direccion && <p className="text-red-600 text-xs mt-1">{errors.direccion}</p>}

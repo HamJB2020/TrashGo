@@ -61,6 +61,15 @@ export default function MisSolicitudes({ refreshKey }) {
     }
   };
 
+  const handleCancelar = async (id) => {
+    try {
+      await api.put(`/recogidas/${id}/cancelar`);
+      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, estado: 'cancelada' } : s));
+    } catch (err) {
+      console.error('Error al cancelar:', err);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (cargando.current) return;
@@ -142,10 +151,16 @@ export default function MisSolicitudes({ refreshKey }) {
                 </MapContainer>
               </div>
             )}
+            {sol.peso && <p className="text-xs text-gray-400 mt-1">Peso: {sol.peso} kg</p>}
             {sol.estado === 'pendiente' && !sol.pagado && sol.coste > 0 && (
-              <button onClick={() => setPagarSolicitud(sol)} className="mt-2 w-full bg-bosque-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-bosque-700 transition">
-                Pagar {sol.coste.toFixed(2)} €
-              </button>
+              <div className="flex gap-2 mt-2">
+                <button onClick={() => setPagarSolicitud(sol)} className="flex-1 bg-bosque-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-bosque-700 transition">
+                  Pagar {sol.coste.toFixed(2)} €
+                </button>
+                <button onClick={() => handleCancelar(sol.id)} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                  Cancelar
+                </button>
+              </div>
             )}
             {sol.pagado && <span className="mt-2 text-xs text-green-600 font-semibold block">✓ Pagado</span>}
           </div>
