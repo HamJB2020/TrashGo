@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 export default function Login({ onLogin }) {
@@ -96,6 +96,7 @@ export default function Login({ onLogin }) {
     <div className="min-h-screen bg-fondo py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
+          <Link to="/" className="text-sm text-gray-400 hover:text-bosque-600 transition inline-block mb-4">&larr; Volver</Link>
           <h1 className="text-4xl font-bold text-bosque-800 mb-2">
             TrashGo
           </h1>
@@ -168,6 +169,9 @@ export default function Login({ onLogin }) {
               {errors.password && (
                 <p className="text-red-600 text-sm mt-1">{errors.password}</p>
               )}
+              <div className="mt-1 text-right">
+                <span className="text-sm text-gray-400 cursor-not-allowed">¿Olvidaste tu contraseña?</span>
+              </div>
             </div>
 
             <button

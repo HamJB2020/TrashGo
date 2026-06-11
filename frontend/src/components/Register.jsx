@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-export default function Register({ onRegister }) {
+export default function Register() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
@@ -73,17 +73,13 @@ export default function Register({ onRegister }) {
     setIsLoading(true);
 
     try {
-      const response = await api.post('/auth/register', formData);
-      const data = response.data?.data;
+      await api.post('/auth/register', formData);
 
-      if (!data?.token || !data?.usuario?.username) {
-        throw new Error('Respuesta del servidor inválida');
-      }
+      setSuccessMessage('Registrado correctamente. Redirigiendo al inicio de sesión...');
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('usuario', data.usuario.username);
-      onRegister(data.usuario.username);
-      navigate('/dashboard');
+      setTimeout(() => {
+        navigate('/login');
+      }, 5000);
 
     } catch (error) {
       console.error('Error al registrar usuario:', error);
@@ -105,6 +101,7 @@ export default function Register({ onRegister }) {
     <div className="min-h-screen bg-fondo py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
+          <Link to="/" className="text-sm text-gray-400 hover:text-bosque-600 transition inline-block mb-4">&larr; Volver</Link>
           <h1 className="text-4xl font-bold text-bosque-800 mb-2">
             TrashGo
           </h1>

@@ -8,6 +8,8 @@ const pasos = [
 ];
 
 export default function Home() {
+  const token = localStorage.getItem('token');
+
   return (
     <div className="bg-fondo min-h-[calc(100vh-64px)]">
       <section className="max-w-5xl mx-auto px-6 pt-24 pb-16 text-center">
@@ -22,7 +24,7 @@ export default function Home() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            to="/register"
+            to={token ? '/dashboard' : '/register'}
             className="bg-bosque-600 text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-bosque-700 transition shadow-md"
           >
             Empezar ahora

@@ -41,9 +41,12 @@ exports.crearRecogida = async (req, res) => {
     const recogida = await Recogida.create({
       usuario_id: req.user?.id || null,
       direccion: direccion.trim(),
+      latitud: req.body.latitud || null,
+      longitud: req.body.longitud || null,
       tipo_residuo: tipoResiduo.toLowerCase(),
       descripcion: descripcion || null,
-      urgencia: urgencia || 'normal'
+      urgencia: urgencia || 'normal',
+      fecha_programada: req.body.fechaProgramada || null
     });
 
     if (req.user?.id) {
@@ -163,11 +166,14 @@ exports.obtenerMisRecogidas = async (req, res) => {
     const data = recogidas.map(r => ({
       id: r._id,
       direccion: r.direccion,
+      latitud: r.latitud,
+      longitud: r.longitud,
       tipo_residuo: r.tipo_residuo,
       descripcion: r.descripcion,
       urgencia: r.urgencia,
       estado: r.estado,
-      fecha_creacion: r.fecha_creacion
+      fecha_creacion: r.fecha_creacion,
+      fecha_programada: r.fecha_programada
     }));
 
     return res.status(200).json({ success: true, data });
