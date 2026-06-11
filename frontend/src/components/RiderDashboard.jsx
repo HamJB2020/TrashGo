@@ -20,9 +20,11 @@ export default function RiderDashboard() {
   const [tab, setTab] = useState('disponibles');
   const [disponibles, setDisponibles] = useState([]);
   const [aceptadas, setAceptadas] = useState([]);
+  const [gananciaTotal, setGananciaTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(!sessionStorage.getItem('rider_welcome_dismissed'));
 
   const fetchDisponibles = async () => {
     try {
@@ -35,6 +37,7 @@ export default function RiderDashboard() {
     try {
       const res = await api.get('/recogidas/mis-aceptadas');
       setAceptadas(res.data.data || []);
+      setGananciaTotal(res.data.gananciaTotal || 0);
     } catch { setAceptadas([]); }
   };
 
@@ -96,7 +99,10 @@ export default function RiderDashboard() {
       <ToastContainer toasts={toasts} />
       <div className="max-w-6xl mx-auto">
         <Link to="/dashboard" className="text-sm text-gray-400 hover:text-bosque-600 transition inline-block mb-4">&larr; Volver al panel</Link>
-        <h1 className="text-3xl font-bold text-bosque-800 mb-6">Panel Rider</h1>
+        <h1 className="text-3xl font-bold text-bosque-800 mb-2">Panel Rider</h1>
+        <div className="flex items-center gap-4 mb-6">
+          <p className="text-sm text-gray-500">Ganancia total (80%): <span className="font-bold text-bosque-700 text-lg">{gananciaTotal.toFixed(2)} €</span></p>
+        </div>
 
         <div className="flex gap-2 mb-6">
           {TABS.map(t => (
@@ -183,6 +189,37 @@ export default function RiderDashboard() {
           }}
           onCancel={() => setConfirmAction(null)}
         />
+      )}
+
+      {showWelcome && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-bosque-700 via-bosque-600 to-tierra-700 rounded-3xl shadow-2xl mx-4 max-w-lg w-full p-8 text-white animate-slide-in border border-bosque-400/30">
+            <div className="text-center mb-6">
+              <span className="text-6xl block mb-3">♻️</span>
+              <h2 className="text-3xl font-extrabold tracking-tight">¡Bienvenido, Rider!</h2>
+            </div>
+            <div className="space-y-3 text-sm leading-relaxed text-bosque-100">
+              <p className="text-base font-semibold text-white">🌍 Una ciudad te necesita...</p>
+              <p>
+                El <strong className="text-tierra-300">Monstruo de la Basura</strong> está causando estragos.
+                Montañas de residuos amenazan las calles, los parques y los hogares.
+                Solo personas valientes como tú pueden detenerlo.
+              </p>
+              <p>
+                🚛 Cada solicitud que aceptas es una <strong className="text-tierra-300">misión</strong>.
+                Cada recogida completada es una victoria. Limpia la ciudad, una esquina a la vez.
+              </p>
+              <p className="text-base font-bold text-tierra-300 pt-2">
+                💰 Ganas el 80% de lo que paga el cliente.
+                ¡Cuantas más misiones completes, más salvarás el planeta (y tu bolsillo)!
+              </p>
+            </div>
+            <button onClick={() => { setShowWelcome(false); sessionStorage.setItem('rider_welcome_dismissed', 'true'); }}
+              className="mt-6 w-full bg-white text-bosque-800 font-bold py-3 rounded-xl hover:bg-bosque-50 transition text-lg shadow-lg">
+              ¡Aceptar misión!
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

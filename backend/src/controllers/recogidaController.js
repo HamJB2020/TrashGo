@@ -274,10 +274,15 @@ exports.misAceptadas = async (req, res) => {
       usuario_nombre: r.usuario_id?.nombre,
       usuario_telefono: r.usuario_id?.telefono,
       peso: r.peso,
-      pagado: r.pagado
+      pagado: r.pagado,
+      coste: r.coste
     }));
 
-    return res.status(200).json({ success: true, data });
+    const gananciaTotal = recogidas
+      .filter(r => r.estado === 'completada' && r.pagado)
+      .reduce((sum, r) => sum + (r.coste || 0) * 0.8, 0);
+
+    return res.status(200).json({ success: true, data, gananciaTotal: Math.round(gananciaTotal * 100) / 100 });
 
   } catch (error) {
     console.error('Error al obtener mis aceptadas:', error);

@@ -40,6 +40,7 @@ export default function Register() {
     password: '',
     telefono: '',
     pais: '',
+    esRider: false,
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -58,8 +59,8 @@ export default function Register() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
@@ -77,7 +78,8 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      const payload = { ...formData };
+      const payload = { ...formData, rol: formData.esRider ? 'rider' : 'usuario' };
+      delete payload.esRider;
       await api.post('/auth/register', payload);
       setSuccessMessage('Registrado correctamente. Redirigiendo al inicio de sesión...');
       setTimeout(() => navigate('/login'), 5000);
@@ -163,6 +165,12 @@ export default function Register() {
               </select>
               {errors.pais && <p className="text-red-600 text-sm mt-1">{errors.pais}</p>}
             </div>
+
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" name="esRider" checked={formData.esRider} onChange={handleInputChange}
+                className="w-5 h-5 text-bosque-600 rounded border-gray-300" />
+              <span className="text-sm text-gray-700">Registrarme como <strong>rider</strong> (recolector de residuos)</span>
+            </label>
 
             <button type="submit" disabled={isLoading}
               className="w-full bg-bosque-600 text-white font-bold py-3 rounded-lg hover:bg-bosque-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">

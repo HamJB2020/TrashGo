@@ -6,7 +6,7 @@ exports.register = async (req, res) => {
   let usuario = null;
 
   try {
-    const { username, email, password, direccion, telefono, pais } = req.body;
+    const { username, email, password, direccion, telefono, pais, rol } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'username, email y password son obligatorios' });
@@ -27,7 +27,8 @@ exports.register = async (req, res) => {
       password: passwordHash,
       direccion,
       telefono,
-      pais
+      pais,
+      rol: rol === 'rider' ? 'rider' : 'usuario'
     });
 
     const token = jwt.sign(
