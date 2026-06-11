@@ -72,27 +72,6 @@ export default function Home() {
           </Link>
         </div>
       </section>
-
-      <section className="bg-white py-16 border-t border-gray-200">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-bosque-800 mb-8">Contacto</h2>
-          <div className="grid md:grid-cols-3 gap-8 text-left">
-            <div>
-              <h3 className="font-semibold text-bosque-700 mb-1">Responsable</h3>
-              <p className="text-gray-500 text-sm">Haitham El Mansouri</p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-bosque-700 mb-1">Correo</h3>
-              <p className="text-gray-500 text-sm">h.elmansouri@trashgo.es</p>
-            </div>
-            <div>
-              <h3 className="font-semibold text-bosque-700 mb-1">Teléfono</h3>
-              <p className="text-gray-500 text-sm">+34 612 345 789</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <footer className="border-t border-gray-200 py-6 text-center text-sm text-gray-400">
         &copy; {new Date().getFullYear()} TrashGo. Todos los derechos reservados.
       </footer>

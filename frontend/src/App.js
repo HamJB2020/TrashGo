@@ -7,6 +7,7 @@ import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Perfil from './components/Perfil';
 import SolicitudesPage from './components/SolicitudesPage';
+import ContactoPage from './components/ContactoPage';
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -20,7 +21,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login onLogin={(u) => setUser(u)} />} />
-        <Route path="/register" element={<Register />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/contacto" element={<ContactoPage />} />
           <Route
             path="/dashboard"
             element={user ? <Dashboard /> : <Navigate to="/login" />}

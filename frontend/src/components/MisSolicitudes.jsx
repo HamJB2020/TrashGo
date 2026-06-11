@@ -131,12 +131,14 @@ export default function MisSolicitudes({ refreshKey }) {
               <span>📍</span>
               <span className="truncate">{sol.direccion}</span>
             </div>
-            {sol.fecha_programada && (
+            {sol.fecha_programada && sol.estado === 'pendiente' && (
               <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
                 <span>⏰</span>
                 <CuentaAtras fecha={sol.fecha_programada} />
               </div>
             )}
+            {sol.estado === 'cancelada' && <p className="text-xs text-red-500 font-semibold mt-1">Cancelada</p>}
+            {sol.estado === 'completada' && <p className="text-xs text-green-600 font-semibold mt-1">Completada</p>}
             {sol.fecha_creacion && (
               <p className="text-xs text-gray-400 mt-1">
                 Solicitado {new Date(sol.fecha_creacion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
