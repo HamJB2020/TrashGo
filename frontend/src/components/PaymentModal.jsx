@@ -21,7 +21,8 @@ export default function PaymentModal({ coste, onClose, onSuccess }) {
   }, [paso, onSuccess, onClose]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]" onClick={onClose}>
+      <style>{`.leaflet-pane{z-index:1!important}.leaflet-top,.leaflet-bottom{z-index:2!important}`}</style>
       <div className="bg-white rounded-xl p-8 max-w-sm w-full mx-4 shadow-2xl" onClick={e => e.stopPropagation()}>
         <div className="text-center">
           {paso < FRASES.length - 1 ? (
