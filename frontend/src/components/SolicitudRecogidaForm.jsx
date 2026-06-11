@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
@@ -10,6 +10,14 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
+
+function MapController({ posicion }) {
+  const map = useMap();
+  useEffect(() => {
+    if (posicion) map.setView(posicion, 14, { animate: true });
+  }, [posicion, map]);
+  return null;
+}
 
 function Marcador({ posicion, onMove }) {
   useMapEvents({
@@ -28,10 +36,18 @@ async function reverseGeocode(lat, lng) {
       { headers: { 'User-Agent': 'TrashGo/1.0' } }
     );
     const data = await res.json();
-    if (data?.display_name) return data.display_name;
-    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    if (data?.address) {
+      const a = data.address;
+      const calle = [a.road, a.house_number].filter(Boolean).join(', ');
+      const ciudad = a.city || a.town || a.village || a.municipality || a.county || '';
+      const pais = a.country || '';
+      return { calle, ciudad, pais };
+    }
+    const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    return { calle: fallback, ciudad: '', pais: '' };
   } catch {
-    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    const fallback = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    return { calle: fallback, ciudad: '', pais: '' };
   }
 }
 
@@ -43,7 +59,19 @@ async function geocodeAddress(direccion) {
     );
     const data = await res.json();
     if (data && data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display_name: data[0].display_name };
+      const r = data[0];
+      const addr = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${r.lat}&lon=${r.lon}&addressdetails=1&accept-language=es`,
+        { headers: { 'User-Agent': 'TrashGo/1.0' } }
+      );
+      const rev = await addr.json();
+      const a = rev?.address || {};
+      return {
+        lat: parseFloat(r.lat), lng: parseFloat(r.lon),
+        calle: [a.road, a.house_number].filter(Boolean).join(', '),
+        ciudad: a.city || a.town || a.village || a.municipality || a.county || '',
+        pais: a.country || ''
+      };
     }
     return null;
   } catch {
@@ -71,11 +99,21 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   const [posicion, setPosicion] = useState(null);
   const [buscandoDir, setBuscandoDir] = useState(false);
   const [formData, setFormData] = useState({
-    direccion: localStorage.getItem('direccion_predeterminada') || '',
+    calle: '',
+    numero: '',
+    ciudad: '',
+    pais: '',
+    piso: '',
     tipoResiduo: [],
     descripcion: '',
     urgencia: 'normal',
   });
+
+  const direccionCompleta = () => {
+    const partes = [formData.calle, formData.numero, formData.ciudad, formData.pais].filter(Boolean);
+    const base = partes.join(', ');
+    return formData.piso ? `${base}, ${formData.piso}` : base;
+  };
   const [cuando, setCuando] = useState('hoy');
   const [fechaCustom, setFechaCustom] = useState('');
   const [guardarDir, setGuardarDir] = useState(!!localStorage.getItem('direccion_predeterminada'));
@@ -96,7 +134,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     setPosicion([lat, lng]);
     setBuscandoDir(true);
     const addr = await reverseGeocode(lat, lng);
-    setFormData(prev => ({ ...prev, direccion: addr }));
+    setFormData(prev => ({ ...prev, calle: addr.calle, ciudad: addr.ciudad, pais: addr.pais }));
     setBuscandoDir(false);
   }, []);
 
@@ -129,24 +167,26 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   };
 
   const handleAddressBlur = useCallback(async () => {
-    if (!formData.direccion.trim() || posicion) return;
+    if (!formData.calle.trim() || posicion) return;
     setBuscandoDir(true);
-    const result = await geocodeAddress(formData.direccion);
+    const q = [formData.calle, formData.numero, formData.ciudad].filter(Boolean).join(', ');
+    const result = await geocodeAddress(q);
     if (result) {
       setPosicion([result.lat, result.lng]);
-      setFormData(prev => ({ ...prev, direccion: result.display_name }));
+      setFormData(prev => ({ ...prev, calle: result.calle, ciudad: result.ciudad || prev.ciudad, pais: result.pais || prev.pais }));
       setErrors(prev => ({ ...prev, direccion: '' }));
     } else {
       setErrors(prev => ({ ...prev, direccion: 'Dirección no encontrada. Coloca un pin en el mapa.' }));
     }
     setBuscandoDir(false);
-  }, [formData.direccion, posicion]);
+  }, [formData.calle, formData.numero, formData.ciudad, posicion]);
 
   const validarFormulario = () => {
     const nuevosErrores = {};
     if (!posicion) {
       nuevosErrores.direccion = 'Coloca un pin en el mapa o escribe una dirección válida';
     }
+    if (!formData.calle.trim()) nuevosErrores.calle = 'La calle es obligatoria';
     if (cuando === 'custom' && !fechaCustom) {
       nuevosErrores.fechaCustom = 'Selecciona una fecha y hora';
     }
@@ -181,7 +221,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     try {
       const coste = calcularCoste(formData.tipoResiduo, cuando, formData.urgencia);
       const body = {
-        direccion: formData.direccion,
+        direccion: direccionCompleta(),
         latitud: posicion?.[0] || null,
         longitud: posicion?.[1] || null,
         tipoResiduo: formData.tipoResiduo,
@@ -193,10 +233,10 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
       await api.post('/recogidas', body);
 
-      if (guardarDir && formData.direccion) localStorage.setItem('direccion_predeterminada', formData.direccion);
+      if (guardarDir) localStorage.setItem('direccion_predeterminada', direccionCompleta());
 
       setSuccessMessage('Solicitud creada. Venimos en ' + formatearCuentaAtras(calcularFechaProgramada()));
-      setFormData({ direccion: localStorage.getItem('direccion_predeterminada') || '', tipoResiduo: [], descripcion: '', urgencia: 'normal' });
+      setFormData({ calle: '', numero: '', ciudad: '', pais: '', piso: '', tipoResiduo: [], descripcion: '', urgencia: 'normal' });
       setCuando('hoy');
       setFechaCustom('');
       setPosicion(null);
@@ -239,24 +279,50 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
               <div className="h-52 w-full rounded-lg overflow-hidden border border-gray-300 z-0">
                 <MapContainer center={posicion || [19.4326, -99.1332]} zoom={posicion ? 14 : 3} className="h-full w-full" zoomControl={false}>
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                  <MapController posicion={posicion} />
                   <Marcador posicion={posicion} onMove={manejarMovimientoPin} />
                 </MapContainer>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Haz clic en el mapa para colocar el pin o arrastra el pin existente.</p>
-              <div className="mt-2 relative">
-                <input
-                  type="text"
-                  name="direccion"
-                  value={formData.direccion}
-                  onChange={handleInputChange}
-                  onBlur={handleAddressBlur}
-                  placeholder="Dirección obtenida del mapa o escríbela manualmente"
-                  className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition pr-8 ${errors.direccion ? 'border-red-500' : 'border-gray-300'}`}
-                />
-                {buscandoDir && (
-                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">Buscando...</span>
-                )}
+              <p className="text-xs text-gray-400 mt-1">Haz clic en el mapa para colocar el pin o arrastra el pin para ajustar.</p>
+
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <div className="col-span-2">
+                  <input type="text" name="calle" value={formData.calle} onChange={handleInputChange} onBlur={handleAddressBlur}
+                    placeholder="Calle *"
+                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition ${errors.calle ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  {errors.calle && <p className="text-red-600 text-xs mt-1">{errors.calle}</p>}
+                </div>
+                <div>
+                  <input type="text" name="numero" value={formData.numero} onChange={handleInputChange}
+                    placeholder="Nº"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500"
+                  />
+                </div>
               </div>
+
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <div>
+                  <input type="text" name="ciudad" value={formData.ciudad} onChange={handleInputChange}
+                    placeholder="Ciudad *"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500"
+                  />
+                </div>
+                <div>
+                  <input type="text" name="pais" value={formData.pais} onChange={handleInputChange}
+                    placeholder="País"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-2">
+                <input type="text" name="piso" value={formData.piso} onChange={handleInputChange}
+                  placeholder="Piso / Puerta / Bloque (opcional)"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500"
+                />
+              </div>
+
               {errors.direccion && <p className="text-red-600 text-xs mt-1">{errors.direccion}</p>}
               {posicion && (
                 <p className="text-xs text-gray-400 mt-1">Coordenadas: {posicion[0].toFixed(5)}, {posicion[1].toFixed(5)}</p>
@@ -265,12 +331,6 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                 <input type="checkbox" checked={guardarDir} onChange={(e) => setGuardarDir(e.target.checked)} className="w-4 h-4 text-bosque-600 rounded border-gray-300" />
                 <span className="text-sm text-gray-600">Guardar como dirección predeterminada</span>
               </label>
-              {localStorage.getItem('direccion_predeterminada') && (
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-bosque-600">Dirección predeterminada guardada.</span>
-                  <button type="button" onClick={() => { localStorage.removeItem('direccion_predeterminada'); setGuardarDir(false); setFormData(prev => ({ ...prev, direccion: '' })); }} className="text-xs text-red-500 hover:text-red-700 underline">Eliminar</button>
-                </div>
-              )}
             </div>
 
             <div>
