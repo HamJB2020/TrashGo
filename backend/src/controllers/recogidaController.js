@@ -53,7 +53,8 @@ exports.crearRecogida = async (req, res) => {
       tipo_residuo: tiposNormalizados,
       descripcion: descripcion || null,
       urgencia: urgencia || 'normal',
-      fecha_programada: req.body.fechaProgramada || null
+      fecha_programada: req.body.fechaProgramada || null,
+      coste: req.body.coste || 0
     });
 
     if (req.user?.id) {
@@ -140,6 +141,7 @@ exports.listadoDisponibles = async (req, res) => {
       urgencia: r.urgencia,
       estado: r.estado,
       fecha_creacion: r.fecha_creacion,
+      coste: r.coste,
       usuario_nombre: r.usuario_id?.nombre,
       usuario_telefono: r.usuario_id?.telefono
     }));
@@ -180,7 +182,8 @@ exports.obtenerMisRecogidas = async (req, res) => {
       urgencia: r.urgencia,
       estado: r.estado,
       fecha_creacion: r.fecha_creacion,
-      fecha_programada: r.fecha_programada
+      fecha_programada: r.fecha_programada,
+      coste: r.coste
     }));
 
     return res.status(200).json({ success: true, data });

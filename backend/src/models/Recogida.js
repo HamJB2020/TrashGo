@@ -11,7 +11,8 @@ const recogidaSchema = new mongoose.Schema({
   estado: { type: String, enum: ['pendiente', 'aceptada', 'completada', 'cancelada'], default: 'pendiente' },
   rider_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null },
   fecha_aceptacion: { type: Date },
-  fecha_programada: { type: Date }
+  fecha_programada: { type: Date },
+  coste: { type: Number, default: 0 }
 }, { timestamps: { createdAt: 'fecha_creacion', updatedAt: 'fecha_actualizacion' } });
 
 module.exports = mongoose.model('Recogida', recogidaSchema);

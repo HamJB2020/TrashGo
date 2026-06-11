@@ -35,6 +35,38 @@ async function reverseGeocode(lat, lng) {
   }
 }
 
+async function geocodeAddress(direccion) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}&limit=1&accept-language=es`,
+      { headers: { 'User-Agent': 'TrashGo/1.0' } }
+    );
+    const data = await res.json();
+    if (data && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), display_name: data[0].display_name };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+const PRECIOS_MATERIAL = {
+  'orgánico': 3, 'inorgánico': 3, 'mixto': 4, 'especial': 10,
+  'vidrio': 4, 'plástico': 4, 'papel/cartón': 3, 'metal': 5,
+  'electrónico': 8, 'madera': 5, 'textil': 4, 'pilas/baterías': 6,
+  'aceite': 5, 'escombros': 7, 'poda/jardín': 4, 'voluminoso': 8,
+};
+
+const MULTIPLICADOR_CUANDO = { hoy: 1.0, manana: 1.15, custom: 1.3 };
+const MULTIPLICADOR_URGENCIA = { normal: 1.0, alta: 1.25 };
+
+function calcularCoste(tipos, cuando, urgencia) {
+  if (!Array.isArray(tipos) || tipos.length === 0) return 0;
+  const base = tipos.reduce((sum, t) => sum + (PRECIOS_MATERIAL[t] || 0), 0);
+  return base * (MULTIPLICADOR_CUANDO[cuando] || 1) * (MULTIPLICADOR_URGENCIA[urgencia] || 1);
+}
+
 export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   const [posicion, setPosicion] = useState(null);
   const [buscandoDir, setBuscandoDir] = useState(false);
@@ -96,6 +128,20 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     return `~${h}h ${m}m`;
   };
 
+  const handleAddressBlur = useCallback(async () => {
+    if (!formData.direccion.trim() || posicion) return;
+    setBuscandoDir(true);
+    const result = await geocodeAddress(formData.direccion);
+    if (result) {
+      setPosicion([result.lat, result.lng]);
+      setFormData(prev => ({ ...prev, direccion: result.display_name }));
+      setErrors(prev => ({ ...prev, direccion: '' }));
+    } else {
+      setErrors(prev => ({ ...prev, direccion: 'Dirección no encontrada. Coloca un pin en el mapa.' }));
+    }
+    setBuscandoDir(false);
+  }, [formData.direccion, posicion]);
+
   const validarFormulario = () => {
     const nuevosErrores = {};
     if (!posicion && !formData.direccion.trim()) {
@@ -133,6 +179,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     setIsLoading(true);
 
     try {
+      const coste = calcularCoste(formData.tipoResiduo, cuando, formData.urgencia);
       const body = {
         direccion: formData.direccion,
         latitud: posicion?.[0] || null,
@@ -141,6 +188,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
         descripcion: formData.descripcion || null,
         urgencia: formData.urgencia,
         fechaProgramada: calcularFechaProgramada(),
+        coste,
       };
 
       await api.post('/recogidas', body);
@@ -201,6 +249,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                   name="direccion"
                   value={formData.direccion}
                   onChange={handleInputChange}
+                  onBlur={handleAddressBlur}
                   placeholder="Dirección obtenida del mapa o escríbela manualmente"
                   className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition pr-8 ${errors.direccion ? 'border-red-500' : 'border-gray-300'}`}
                 />
@@ -246,6 +295,19 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                 </p>
               )}
             </div>
+
+            {formData.tipoResiduo.length > 0 && (
+              <div className="bg-bosque-50 border border-bosque-200 rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-semibold text-gray-700">Total estimado</span>
+                  <span className="text-2xl font-bold text-bosque-800">{calcularCoste(formData.tipoResiduo, cuando, formData.urgencia).toFixed(2)} €</span>
+                </div>
+                <div className="text-xs text-gray-500 mt-2 space-y-1">
+                  <p>Materiales: {formData.tipoResiduo.map(t => `${t} (${PRECIOS_MATERIAL[t]}€)`).join(', ')}</p>
+                  <p>Cuándo: {cuando === 'hoy' ? 'Hoy (×1.0)' : cuando === 'manana' ? 'Mañana (×1.15)' : 'Programado (×1.3)'} | Urgencia: {formData.urgencia === 'normal' ? 'Normal (×1.0)' : 'Alta (×1.25)'}</p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Tipos de Residuo *</label>

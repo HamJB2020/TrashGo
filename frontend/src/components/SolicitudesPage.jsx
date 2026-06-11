@@ -108,7 +108,10 @@ export default function SolicitudesPage() {
                   {sol.urgencia === 'alta' && <span className="text-sm font-bold text-red-600">URGENTE</span>}
                 </div>
 
-                <p className="text-lg text-gray-800 font-semibold">{Array.isArray(sol.tipo_residuo) ? sol.tipo_residuo.join(', ') : sol.tipo_residuo}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-lg text-gray-800 font-semibold">{Array.isArray(sol.tipo_residuo) ? sol.tipo_residuo.join(', ') : sol.tipo_residuo}</p>
+                  {sol.coste != null && <span className="text-xl font-bold text-bosque-700">{sol.coste.toFixed(2)} €</span>}
+                </div>
                 {sol.descripcion && <p className="text-base text-gray-600 mt-1">{sol.descripcion}</p>}
 
                 <div className="flex items-center gap-2 mt-3 text-base text-gray-500">

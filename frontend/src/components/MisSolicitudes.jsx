@@ -101,7 +101,10 @@ export default function MisSolicitudes({ refreshKey }) {
               {sol.urgencia === 'alta' && <span className="text-xs font-bold text-red-600">URGENTE</span>}
             </div>
 
-            <p className="text-sm text-gray-700 font-semibold">{Array.isArray(sol.tipo_residuo) ? sol.tipo_residuo.join(', ') : sol.tipo_residuo}</p>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-700 font-semibold">{Array.isArray(sol.tipo_residuo) ? sol.tipo_residuo.join(', ') : sol.tipo_residuo}</p>
+              {sol.coste != null && <span className="text-sm font-bold text-bosque-700">{sol.coste.toFixed(2)} €</span>}
+            </div>
             {sol.descripcion && <p className="text-xs text-gray-500 mt-1">{sol.descripcion}</p>}
 
             <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">

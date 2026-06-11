@@ -36,6 +36,22 @@ async function reverseGeocode(lat, lng) {
   }
 }
 
+async function geocodeAddress(direccion) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}&limit=1&accept-language=es`,
+      { headers: { 'User-Agent': 'TrashGo/1.0' } }
+    );
+    const data = await res.json();
+    if (data && data.length > 0) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lng), display_name: data[0].display_name };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export default function Register() {
   const navigate = useNavigate();
   const [posicion, setPosicion] = useState(null);
@@ -64,6 +80,20 @@ export default function Register() {
     setBuscandoDir(true);
     const addr = await reverseGeocode(lat, lng);
     setFormData(prev => ({ ...prev, direccion: addr }));
+    setBuscandoDir(false);
+  };
+
+  const handleAddressBlur = async () => {
+    if (!formData.direccion.trim() || posicion) return;
+    setBuscandoDir(true);
+    const result = await geocodeAddress(formData.direccion);
+    if (result) {
+      setPosicion([result.lat, result.lng]);
+      setFormData(prev => ({ ...prev, direccion: result.display_name }));
+      setErrors(prev => ({ ...prev, direccion: '' }));
+    } else {
+      setErrors(prev => ({ ...prev, direccion: 'Dirección no encontrada. Coloca un pin en el mapa.' }));
+    }
     setBuscandoDir(false);
   };
 
@@ -182,7 +212,7 @@ export default function Register() {
                 </MapContainer>
               </div>
               <div className="relative">
-                <input type="text" name="direccion" value={formData.direccion} onChange={handleInputChange}
+                <input type="text" name="direccion" value={formData.direccion} onChange={handleInputChange} onBlur={handleAddressBlur}
                   placeholder="Dirección obtenida del mapa o escríbela manualmente"
                   className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition pr-16 ${errors.direccion ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'}`}
                 />
