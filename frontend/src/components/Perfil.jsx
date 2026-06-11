@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import ConfirmModal from './ConfirmModal';
 
 export default function Perfil({ user, onLogout }) {
   const navigate = useNavigate();
@@ -9,7 +10,7 @@ export default function Perfil({ user, onLogout }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
+  const [showConfirm, setShowConfirm] = useState(false);
   const [form, setForm] = useState({ nombre: '', telefono: '', pais: '' });
 
   useEffect(() => {
@@ -107,11 +108,19 @@ export default function Perfil({ user, onLogout }) {
                 <button type="submit" disabled={saving} className="flex-1 bg-bosque-600 text-white font-semibold py-2.5 rounded-lg hover:bg-bosque-700 transition disabled:opacity-50 text-sm">
                   {saving ? 'Guardando...' : 'Guardar cambios'}
                 </button>
-                <button type="button" onClick={() => { if (!window.confirm('¿Estás seguro de que quieres cerrar sesión?')) return; localStorage.removeItem('token'); localStorage.removeItem('usuario'); onLogout(); navigate('/'); }} className="px-4 py-2.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                <button type="button" onClick={() => setShowConfirm(true)} className="px-4 py-2.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                   Cerrar sesión
                 </button>
               </div>
             </form>
+          )}
+
+          {showConfirm && (
+            <ConfirmModal
+              mensaje="¿Estás seguro de que quieres cerrar sesión?"
+              onConfirm={() => { setShowConfirm(false); localStorage.removeItem('token'); localStorage.removeItem('usuario'); onLogout(); navigate('/'); }}
+              onCancel={() => setShowConfirm(false)}
+            />
           )}
 
           <div className="mt-6 pt-4 border-t border-gray-200">

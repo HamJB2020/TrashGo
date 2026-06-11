@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
 import PaymentModal from './PaymentModal';
 import ToastContainer, { showToast } from './Toast';
+import ConfirmModal from './ConfirmModal';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -53,6 +54,7 @@ export default function MisSolicitudes({ refreshKey }) {
   const cargando = useRef(false);
   const [pagarSolicitud, setPagarSolicitud] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const [confirmCancel, setConfirmCancel] = useState(null);
   const enviando = useRef(false);
 
   const handlePagar = async (id) => {
@@ -176,7 +178,7 @@ export default function MisSolicitudes({ refreshKey }) {
                 <button onClick={() => setPagarSolicitud(sol)} className="flex-1 bg-bosque-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-bosque-700 transition">
                   Pagar {sol.coste.toFixed(2)} €
                 </button>
-                <button onClick={() => { if (window.confirm('¿Estás seguro de que quieres cancelar esta solicitud?')) handleCancelar(sol.id); }} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                <button onClick={() => setConfirmCancel({ id: sol.id, pagado: sol.pagado })} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                   Cancelar
                 </button>
               </div>
@@ -184,7 +186,7 @@ export default function MisSolicitudes({ refreshKey }) {
             {sol.pagado && sol.estado === 'pendiente' && (
               <div className="flex gap-2 mt-2">
                 <span className="flex-1 text-xs text-green-600 font-semibold self-center">✓ Pagado</span>
-                <button onClick={() => { if (window.confirm('¿Estás seguro? La solicitud se cancelará sin reembolso.')) handleCancelar(sol.id); }} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                <button onClick={() => setConfirmCancel({ id: sol.id, pagado: true })} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                   Cancelar
                 </button>
               </div>
@@ -195,6 +197,14 @@ export default function MisSolicitudes({ refreshKey }) {
       <Link to="/solicitudes" className="block text-center text-sm text-bosque-600 hover:text-bosque-700 font-semibold mt-4 pt-3 border-t border-gray-100 transition">Ver todas las solicitudes →</Link>
       {pagarSolicitud && (
         <PaymentModal coste={pagarSolicitud.coste} onClose={() => setPagarSolicitud(null)} onSuccess={() => handlePagar(pagarSolicitud.id)} />
+      )}
+      {confirmCancel && (
+        <ConfirmModal
+          mensaje={confirmCancel.pagado ? '¿Estás seguro? La solicitud se cancelará sin reembolso.' : '¿Estás seguro de que quieres cancelar esta solicitud?'}
+          confirmText="Sí, cancelar"
+          onConfirm={() => { handleCancelar(confirmCancel.id); setConfirmCancel(null); }}
+          onCancel={() => setConfirmCancel(null)}
+        />
       )}
     </div>
     </div>

@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
 import PaymentModal from './PaymentModal';
 import ToastContainer, { showToast } from './Toast';
+import ConfirmModal from './ConfirmModal';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -53,6 +54,7 @@ export default function SolicitudesPage() {
   const [loading, setLoading] = useState(true);
   const [pagarSolicitud, setPagarSolicitud] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const [confirmCancel, setConfirmCancel] = useState(null);
   const cargando = useRef(false);
   const enviando = useRef(false);
 
@@ -182,7 +184,7 @@ export default function SolicitudesPage() {
                     <button onClick={() => setPagarSolicitud(sol)} className="flex-1 bg-bosque-600 text-white font-semibold py-3 rounded-lg hover:bg-bosque-700 transition text-base">
                       Pagar {sol.coste.toFixed(2)} €
                     </button>
-                    <button onClick={() => { if (window.confirm('¿Estás seguro de que quieres cancelar esta solicitud?')) handleCancelar(sol.id); }} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                    <button onClick={() => setConfirmCancel({ id: sol.id, pagado: false })} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                       Cancelar
                     </button>
                   </div>
@@ -190,7 +192,7 @@ export default function SolicitudesPage() {
                 {sol.pagado && sol.estado === 'pendiente' && (
                   <div className="flex gap-3 mt-4 items-center">
                     <span className="text-base text-green-600 font-semibold">✓ Pagado</span>
-                    <button onClick={() => { if (window.confirm('¿Estás seguro? La solicitud se cancelará sin reembolso.')) handleCancelar(sol.id); }} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                    <button onClick={() => setConfirmCancel({ id: sol.id, pagado: true })} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                       Cancelar
                     </button>
                   </div>
@@ -202,6 +204,14 @@ export default function SolicitudesPage() {
       </div>
       {pagarSolicitud && (
         <PaymentModal coste={pagarSolicitud.coste} onClose={() => setPagarSolicitud(null)} onSuccess={() => handlePagar(pagarSolicitud.id)} />
+      )}
+      {confirmCancel && (
+        <ConfirmModal
+          mensaje={confirmCancel.pagado ? '¿Estás seguro? La solicitud se cancelará sin reembolso.' : '¿Estás seguro de que quieres cancelar esta solicitud?'}
+          confirmText="Sí, cancelar"
+          onConfirm={() => { handleCancelar(confirmCancel.id); setConfirmCancel(null); }}
+          onCancel={() => setConfirmCancel(null)}
+        />
       )}
     </div>
   );
