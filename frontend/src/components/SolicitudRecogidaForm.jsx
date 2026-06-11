@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
+import ToastContainer, { showToast } from './Toast';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -117,8 +118,8 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   const [fechaCustom, setFechaCustom] = useState('');
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [toasts, setToasts] = useState([]);
+  const enviando = useRef(false);
 
   useEffect(() => {
     const centrarEnPais = async () => {
@@ -247,8 +248,8 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMessage('');
-    setSuccessMessage('');
+    if (enviando.current) return;
+    setToasts([]);
 
     const validationErrors = validarFormulario();
     if (Object.keys(validationErrors).length > 0) {
@@ -256,6 +257,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
       return;
     }
 
+    enviando.current = true;
     setIsLoading(true);
 
     try {
@@ -274,22 +276,21 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
       await api.post('/recogidas', body);
 
-      setSuccessMessage('Solicitud creada. Venimos en ' + formatearCuentaAtras(calcularFechaProgramada()));
+      showToast(setToasts, 'Solicitud creada. Venimos en ' + formatearCuentaAtras(calcularFechaProgramada()), 'success');
       setFormData({ calle: '', numero: '', ciudad: '', pais: '', piso: '', peso: 1, tipoResiduo: [], descripcion: '', urgencia: 'normal' });
       setCuando('hoy');
       setFechaCustom('');
       setPosicion(null);
 
       if (onSuccess) onSuccess();
-      setTimeout(() => setSuccessMessage(''), 4000);
 
     } catch (error) {
       console.error('Error al crear recogida:', error);
-      if (error.response?.data?.message) setErrorMessage(error.response.data.message);
-      else if (error.response?.data?.error) setErrorMessage(error.response.data.error);
-      else setErrorMessage('Error de comunicación con el servidor.');
+      const msg = error.response?.data?.message || error.response?.data?.error || 'Error de comunicación con el servidor.';
+      showToast(setToasts, msg, 'error');
     } finally {
       setIsLoading(false);
+      enviando.current = false;
     }
   };
 
@@ -300,16 +301,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
       <div className={simple ? '' : 'max-w-2xl mx-auto'}>
         <div className="bg-white rounded-lg shadow-xl p-6 md:p-8">
 
-          {successMessage && (
-            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm text-center">
-              {successMessage}
-            </div>
-          )}
-          {errorMessage && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm text-center">
-              {errorMessage}
-            </div>
-          )}
+          <ToastContainer toasts={toasts} />
 
           <form onSubmit={handleSubmit} className="space-y-5">
 

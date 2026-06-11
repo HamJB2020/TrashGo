@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
 import PaymentModal from './PaymentModal';
+import ToastContainer, { showToast } from './Toast';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -51,23 +52,35 @@ export default function SolicitudesPage() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagarSolicitud, setPagarSolicitud] = useState(null);
+  const [toasts, setToasts] = useState([]);
   const cargando = useRef(false);
+  const enviando = useRef(false);
 
   const handlePagar = async (id) => {
+    if (enviando.current) return;
+    enviando.current = true;
     try {
       await api.put(`/recogidas/${id}/pagar`);
       setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, pagado: true } : s));
+      showToast(setToasts, 'Pago realizado correctamente', 'success');
     } catch (err) {
-      console.error('Error al pagar:', err);
+      showToast(setToasts, 'Error al procesar el pago', 'error');
+    } finally {
+      enviando.current = false;
     }
   };
 
   const handleCancelar = async (id) => {
+    if (enviando.current) return;
+    enviando.current = true;
     try {
       await api.put(`/recogidas/${id}/cancelar`);
       setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, estado: 'cancelada' } : s));
+      showToast(setToasts, 'Solicitud cancelada', 'info');
     } catch (err) {
-      console.error('Error al cancelar:', err);
+      showToast(setToasts, 'Error al cancelar la solicitud', 'error');
+    } finally {
+      enviando.current = false;
     }
   };
 
@@ -108,6 +121,7 @@ export default function SolicitudesPage() {
 
   return (
     <div className="min-h-screen bg-fondo py-12 px-4">
+      <ToastContainer toasts={toasts} />
       <div className="max-w-4xl mx-auto">
         <Link to="/dashboard" className="text-sm text-gray-400 hover:text-bosque-600 transition inline-block mb-4">&larr; Volver al panel</Link>
         <h1 className="text-3xl font-bold text-bosque-800 mb-6">Mis solicitudes ({solicitudes.length})</h1>
@@ -122,7 +136,11 @@ export default function SolicitudesPage() {
             {solicitudes.map((sol) => (
               <div key={sol.id} className="bg-white rounded-lg shadow-xl p-6 border border-gray-200">
                 <div className="flex items-start justify-between gap-2 mb-3">
-                  <span className={`text-sm font-semibold px-3 py-1 rounded-full border ${estadoBadge(sol.estado)}`}>
+                  <span className={`text-sm font-semibold px-3 py-1 rounded-full border flex items-center gap-1.5 ${estadoBadge(sol.estado)}`}>
+                    {sol.estado === 'cancelada' && '✕'}
+                    {sol.estado === 'completada' && '✓'}
+                    {sol.estado === 'pendiente' && '◷'}
+                    {sol.estado === 'aceptada' && '◉'}
                     {sol.estado.charAt(0).toUpperCase() + sol.estado.slice(1)}
                   </span>
                   {sol.urgencia === 'alta' && <span className="text-sm font-bold text-red-600">URGENTE</span>}

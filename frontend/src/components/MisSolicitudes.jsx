@@ -5,6 +5,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
 import PaymentModal from './PaymentModal';
+import ToastContainer, { showToast } from './Toast';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -51,22 +52,34 @@ export default function MisSolicitudes({ refreshKey }) {
   const [solicitudes, setSolicitudes] = useState([]);
   const cargando = useRef(false);
   const [pagarSolicitud, setPagarSolicitud] = useState(null);
+  const [toasts, setToasts] = useState([]);
+  const enviando = useRef(false);
 
   const handlePagar = async (id) => {
+    if (enviando.current) return;
+    enviando.current = true;
     try {
       await api.put(`/recogidas/${id}/pagar`);
       setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, pagado: true } : s));
+      showToast(setToasts, 'Pago realizado correctamente', 'success');
     } catch (err) {
-      console.error('Error al pagar:', err);
+      showToast(setToasts, 'Error al procesar el pago', 'error');
+    } finally {
+      enviando.current = false;
     }
   };
 
   const handleCancelar = async (id) => {
+    if (enviando.current) return;
+    enviando.current = true;
     try {
       await api.put(`/recogidas/${id}/cancelar`);
       setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, estado: 'cancelada' } : s));
+      showToast(setToasts, 'Solicitud cancelada', 'info');
     } catch (err) {
-      console.error('Error al cancelar:', err);
+      showToast(setToasts, 'Error al cancelar la solicitud', 'error');
+    } finally {
+      enviando.current = false;
     }
   };
 
@@ -109,13 +122,19 @@ export default function MisSolicitudes({ refreshKey }) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-xl p-6">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">Mis solicitudes ({solicitudes.length})</h3>
-      <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+    <div className="relative">
+      <ToastContainer toasts={toasts} />
+      <div className="bg-white rounded-lg shadow-xl p-6">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Mis solicitudes ({solicitudes.length})</h3>
+        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
         {solicitudes.map((sol) => (
           <div key={sol.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
             <div className="flex items-start justify-between gap-2 mb-2">
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${estadoBadge(sol.estado)}`}>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border flex items-center gap-1 ${estadoBadge(sol.estado)}`}>
+                {sol.estado === 'cancelada' && '✕'}
+                {sol.estado === 'completada' && '✓'}
+                {sol.estado === 'pendiente' && '◷'}
+                {sol.estado === 'aceptada' && '◉'}
                 {sol.estado.charAt(0).toUpperCase() + sol.estado.slice(1)}
               </span>
               {sol.urgencia === 'alta' && <span className="text-xs font-bold text-red-600">URGENTE</span>}
@@ -137,8 +156,8 @@ export default function MisSolicitudes({ refreshKey }) {
                 <CuentaAtras fecha={sol.fecha_programada} />
               </div>
             )}
-            {sol.estado === 'cancelada' && <p className="text-xs text-red-500 font-semibold mt-1">Cancelada</p>}
-            {sol.estado === 'completada' && <p className="text-xs text-green-600 font-semibold mt-1">Completada</p>}
+            {sol.estado === 'cancelada' && <p className="text-xs font-bold text-white bg-red-600 rounded-md px-2 py-1 mt-1 inline-block">✕ Cancelada</p>}
+            {sol.estado === 'completada' && <p className="text-xs font-bold text-white bg-green-600 rounded-md px-2 py-1 mt-1 inline-block">✓ Completada</p>}
             {sol.fecha_creacion && (
               <p className="text-xs text-gray-400 mt-1">
                 Solicitado {new Date(sol.fecha_creacion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
@@ -179,6 +198,7 @@ export default function MisSolicitudes({ refreshKey }) {
       {pagarSolicitud && (
         <PaymentModal coste={pagarSolicitud.coste} onClose={() => setPagarSolicitud(null)} onSuccess={() => handlePagar(pagarSolicitud.id)} />
       )}
+    </div>
     </div>
   );
 }

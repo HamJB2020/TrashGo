@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import ToastContainer, { showToast } from './Toast';
 
 export default function ContactoPage() {
   const [form, setForm] = useState({ nombre: '', email: '', mensaje: '' });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [toasts, setToasts] = useState([]);
   const [success, setSuccess] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,16 +39,15 @@ export default function ContactoPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccess('');
-    setErrorMsg('');
     const v = validar();
     if (Object.keys(v).length > 0) { setErrors(v); return; }
     setIsLoading(true);
     try {
       await api.post('/contacto', form);
-      setSuccess('Mensaje enviado correctamente. Te responderemos pronto.');
-      setForm({ nombre: '', email: '', mensaje: '' });
+      showToast(setToasts, 'Mensaje enviado correctamente. Te responderemos pronto.', 'success');
+      setForm(prev => ({ ...prev, mensaje: '' }));
     } catch (err) {
-      setErrorMsg(err.response?.data?.error || 'Error al enviar el mensaje.');
+      showToast(setToasts, err.response?.data?.error || 'Error al enviar el mensaje.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -55,6 +55,7 @@ export default function ContactoPage() {
 
   return (
     <div className="min-h-screen bg-fondo py-12 px-4">
+      <ToastContainer toasts={toasts} />
       <div className="max-w-lg mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-bosque-800 mb-2">Contacto</h1>
@@ -63,7 +64,6 @@ export default function ContactoPage() {
 
         <div className="bg-white rounded-lg shadow-xl p-8">
           {success && <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm text-center">{success}</div>}
-          {errorMsg && <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm text-center">{errorMsg}</div>}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
