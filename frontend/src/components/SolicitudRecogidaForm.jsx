@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -88,17 +88,22 @@ const PRECIOS_MATERIAL = {
 const MULTIPLICADOR_CUANDO = { hoy: 1.0, manana: 1.15, custom: 1.3 };
 const MULTIPLICADOR_URGENCIA = { normal: 1.0, alta: 1.25 };
 
-function calcularCoste(tipos, cuando, urgencia) {
+function multiplicadorPeso(peso) {
+  if (!peso || peso <= 10) return 1.0;
+  if (peso <= 25) return 1.3;
+  return 1.6;
+}
+
+function calcularCoste(tipos, cuando, urgencia, peso) {
   if (!Array.isArray(tipos) || tipos.length === 0) return 0;
   const base = tipos.reduce((sum, t) => sum + (PRECIOS_MATERIAL[t] || 0), 0);
-  return base * (MULTIPLICADOR_CUANDO[cuando] || 1) * (MULTIPLICADOR_URGENCIA[urgencia] || 1);
+  return base * (MULTIPLICADOR_CUANDO[cuando] || 1) * (MULTIPLICADOR_URGENCIA[urgencia] || 1) * multiplicadorPeso(peso);
 }
 
 export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   const [posicion, setPosicion] = useState(null);
-  const dirDefault = localStorage.getItem('direccion_predeterminada') || '';
   const [formData, setFormData] = useState({
-    calle: dirDefault,
+    calle: '',
     numero: '',
     ciudad: '',
     pais: '',
@@ -116,18 +121,40 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   };
   const [cuando, setCuando] = useState('hoy');
   const [fechaCustom, setFechaCustom] = useState('');
-  const [guardarDir, setGuardarDir] = useState(!!localStorage.getItem('direccion_predeterminada'));
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const geoOk = useRef(false);
 
   useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (p) => { geoOk.current = true; setPosicion([p.coords.latitude, p.coords.longitude]); },
-      () => {}
-    );
+    const centrarEnPais = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await api.get('/auth/perfil');
+        const userPais = res.data.data?.pais;
+        if (!userPais) return;
+        const paises = {
+          'España': [40.4168, -3.7038], 'México': [19.4326, -99.1332],
+          'Argentina': [-34.6037, -58.3816], 'Colombia': [4.7110, -74.0721],
+          'Chile': [-33.4489, -70.6693], 'Perú': [-12.0464, -77.0428],
+          'Ecuador': [-0.1807, -78.4678], 'Venezuela': [10.4806, -66.9036],
+          'Uruguay': [-34.9011, -56.1645], 'Paraguay': [-25.2637, -57.5759],
+          'Bolivia': [-16.5000, -68.1500], 'Costa Rica': [9.9281, -84.0907],
+          'Panamá': [8.9824, -79.5199], 'Guatemala': [14.6349, -90.5069],
+          'Honduras': [14.0723, -87.1921], 'El Salvador': [13.6929, -89.2182],
+          'Nicaragua': [12.1149, -86.2362], 'República Dominicana': [18.4861, -69.9312],
+          'Cuba': [23.1136, -82.3666], 'Puerto Rico': [18.4655, -66.1057],
+          'Estados Unidos': [38.9072, -77.0369], 'Francia': [48.8566, 2.3522],
+          'Italia': [41.9028, 12.4964], 'Portugal': [38.7223, -9.1393],
+          'Reino Unido': [51.5074, -0.1278], 'Alemania': [52.5200, 13.4050],
+          'Brasil': [-15.7934, -47.8822],
+        };
+        const coords = paises[userPais];
+        if (coords) setPosicion(coords);
+      } catch {}
+    };
+    centrarEnPais();
   }, []);
 
   const manejarMovimientoPin = useCallback(async (lat, lng) => {
@@ -238,7 +265,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     setIsLoading(true);
 
     try {
-      const coste = calcularCoste(formData.tipoResiduo, cuando, formData.urgencia);
+      const coste = calcularCoste(formData.tipoResiduo, cuando, formData.urgencia, formData.peso);
       const body = {
         direccion: direccionCompleta(),
         latitud: posicion?.[0] || null,
@@ -252,8 +279,6 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
       };
 
       await api.post('/recogidas', body);
-
-      if (guardarDir) localStorage.setItem('direccion_predeterminada', direccionCompleta());
 
       setSuccessMessage('Solicitud creada. Venimos en ' + formatearCuentaAtras(calcularFechaProgramada()));
       setFormData({ calle: '', numero: '', ciudad: '', pais: '', piso: '', peso: 1, tipoResiduo: [], descripcion: '', urgencia: 'normal' });
@@ -343,24 +368,10 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                 />
               </div>
 
-              <div className="mt-2">
-                <label className="block text-xs font-semibold text-gray-600 mb-1">Peso aproximado</label>
-                <div className="flex items-center gap-3">
-                  <input type="range" min="1" max="50" value={formData.peso} onChange={(e) => setFormData(prev => ({ ...prev, peso: parseInt(e.target.value) }))}
-                    className="flex-1 accent-bosque-600" />
-                  <span className="text-sm font-bold text-bosque-700 min-w-[4rem] text-right">{formData.peso} kg</span>
-                </div>
-                {errors.peso && <p className="text-red-600 text-xs mt-1">{errors.peso}</p>}
-              </div>
-
               {errors.direccion && <p className="text-red-600 text-xs mt-1">{errors.direccion}</p>}
               {posicion && (
                 <p className="text-xs text-gray-400 mt-1">Coordenadas: {posicion[0].toFixed(5)}, {posicion[1].toFixed(5)}</p>
               )}
-              <label className="flex items-center gap-2 mt-2 cursor-pointer">
-                <input type="checkbox" checked={guardarDir} onChange={(e) => setGuardarDir(e.target.checked)} className="w-4 h-4 text-bosque-600 rounded border-gray-300" />
-                <span className="text-sm text-gray-600">Guardar como dirección predeterminada</span>
-              </label>
             </div>
 
             <div>
@@ -390,11 +401,11 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
               <div className="bg-bosque-50 border border-bosque-200 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-semibold text-gray-700">Total estimado</span>
-                  <span className="text-2xl font-bold text-bosque-800">{calcularCoste(formData.tipoResiduo, cuando, formData.urgencia).toFixed(2)} €</span>
+                  <span className="text-2xl font-bold text-bosque-800">{calcularCoste(formData.tipoResiduo, cuando, formData.urgencia, formData.peso).toFixed(2)} €</span>
                 </div>
                 <div className="text-xs text-gray-500 mt-2 space-y-1">
                   <p>Materiales: {formData.tipoResiduo.map(t => `${t} (${PRECIOS_MATERIAL[t]}€)`).join(', ')}</p>
-                  <p>Cuándo: {cuando === 'hoy' ? 'Hoy (×1.0)' : cuando === 'manana' ? 'Mañana (×1.15)' : 'Programado (×1.3)'} | Urgencia: {formData.urgencia === 'normal' ? 'Normal (×1.0)' : 'Alta (×1.25)'}</p>
+                  <p>Peso: {formData.peso} kg (×{multiplicadorPeso(formData.peso).toFixed(1)}) | Cuándo: {cuando === 'hoy' ? 'Hoy (×1.0)' : cuando === 'manana' ? 'Mañana (×1.15)' : 'Programado (×1.3)'} | Urgencia: {formData.urgencia === 'normal' ? 'Normal (×1.0)' : 'Alta (×1.25)'}</p>
                 </div>
               </div>
             )}
@@ -463,6 +474,16 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
               {formData.urgencia === 'normal' && (
                 <p className="text-xs text-gray-500 mt-1">Se recogerá cuando haya tiempo disponible. Diferencia estimada: 10-30 min</p>
               )}
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-gray-600">Peso aproximado</label>
+              <div className="flex items-center gap-3">
+                <input type="range" min="1" max="50" value={formData.peso} onChange={(e) => setFormData(prev => ({ ...prev, peso: parseInt(e.target.value) }))}
+                  className="flex-1 accent-bosque-600" />
+                <span className="text-sm font-bold text-bosque-700 min-w-[4rem] text-right">{formData.peso} kg</span>
+              </div>
+              {errors.peso && <p className="text-red-600 text-xs mt-1">{errors.peso}</p>}
             </div>
 
             <button type="submit" disabled={isLoading}

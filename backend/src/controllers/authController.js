@@ -6,7 +6,7 @@ exports.register = async (req, res) => {
   let usuario = null;
 
   try {
-    const { username, email, password, direccion, telefono } = req.body;
+    const { username, email, password, direccion, telefono, pais } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'username, email y password son obligatorios' });
@@ -26,7 +26,8 @@ exports.register = async (req, res) => {
       email: emailLower,
       password: passwordHash,
       direccion,
-      telefono
+      telefono,
+      pais
     });
 
     const token = jwt.sign(
@@ -64,6 +65,7 @@ exports.getProfile = async (req, res) => {
         email: usuario.email,
         telefono: usuario.telefono,
         direccion: usuario.direccion,
+        pais: usuario.pais,
         rol: usuario.rol
       }
     });
@@ -75,11 +77,12 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { nombre, telefono, direccion } = req.body;
+    const { nombre, telefono, direccion, pais } = req.body;
     const update = {};
     if (nombre !== undefined) update.nombre = nombre.trim();
     if (telefono !== undefined) update.telefono = telefono;
     if (direccion !== undefined) update.direccion = direccion;
+    if (pais !== undefined) update.pais = pais;
 
     const usuario = await Usuario.findByIdAndUpdate(req.user.id, update, { new: true }).select('-password');
     if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
@@ -92,6 +95,7 @@ exports.updateProfile = async (req, res) => {
         email: usuario.email,
         telefono: usuario.telefono,
         direccion: usuario.direccion,
+        pais: usuario.pais,
         rol: usuario.rol
       }
     });

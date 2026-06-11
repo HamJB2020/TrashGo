@@ -10,7 +10,7 @@ export default function Perfil({ user, onLogout }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const [form, setForm] = useState({ nombre: '', telefono: '', direccion: '' });
+  const [form, setForm] = useState({ nombre: '', telefono: '', pais: '' });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -18,7 +18,7 @@ export default function Perfil({ user, onLogout }) {
         const res = await api.get('/auth/perfil');
         const data = res.data.data;
         setProfile(data);
-        setForm({ nombre: data.nombre || '', telefono: data.telefono || '', direccion: data.direccion || '' });
+        setForm({ nombre: data.nombre || '', telefono: data.telefono || '', pais: data.pais || '' });
       } catch (err) {
         if (err.response?.status === 401) { onLogout(); navigate('/login'); }
         else setError('Error al cargar perfil');
@@ -85,8 +85,22 @@ export default function Perfil({ user, onLogout }) {
               </div>
 
               <div>
-                <label htmlFor="direccion" className="block text-sm font-semibold text-gray-700 mb-1">Dirección predeterminada</label>
-                <input id="direccion" name="direccion" value={form.direccion} onChange={handleChange} placeholder="Tu dirección habitual" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500" />
+                <label htmlFor="pais" className="block text-sm font-semibold text-gray-700 mb-1">País</label>
+                <select id="pais" name="pais" value={form.pais} onChange={handleChange}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 bg-white"
+                >
+                  <option value="">Selecciona tu país</option>
+                  {[
+                    'España', 'México', 'Argentina', 'Colombia', 'Chile', 'Perú',
+                    'Ecuador', 'Venezuela', 'Uruguay', 'Paraguay', 'Bolivia',
+                    'Costa Rica', 'Panamá', 'Guatemala', 'Honduras', 'El Salvador',
+                    'Nicaragua', 'República Dominicana', 'Cuba', 'Puerto Rico',
+                    'Estados Unidos', 'Francia', 'Italia', 'Portugal', 'Reino Unido',
+                    'Alemania', 'Brasil'
+                  ].map(p => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex gap-3 pt-2">
