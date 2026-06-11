@@ -157,12 +157,19 @@ export default function MisSolicitudes({ refreshKey }) {
                 <button onClick={() => setPagarSolicitud(sol)} className="flex-1 bg-bosque-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-bosque-700 transition">
                   Pagar {sol.coste.toFixed(2)} €
                 </button>
-                <button onClick={() => handleCancelar(sol.id)} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                <button onClick={() => { if (window.confirm('¿Estás seguro de que quieres cancelar esta solicitud?')) handleCancelar(sol.id); }} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                   Cancelar
                 </button>
               </div>
             )}
-            {sol.pagado && <span className="mt-2 text-xs text-green-600 font-semibold block">✓ Pagado</span>}
+            {sol.pagado && sol.estado === 'pendiente' && (
+              <div className="flex gap-2 mt-2">
+                <span className="flex-1 text-xs text-green-600 font-semibold self-center">✓ Pagado</span>
+                <button onClick={() => { if (window.confirm('¿Estás seguro? La solicitud se cancelará sin reembolso.')) handleCancelar(sol.id); }} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                  Cancelar
+                </button>
+              </div>
+            )}
           </div>
         ))}
       </div>

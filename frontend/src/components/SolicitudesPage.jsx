@@ -164,12 +164,19 @@ export default function SolicitudesPage() {
                     <button onClick={() => setPagarSolicitud(sol)} className="flex-1 bg-bosque-600 text-white font-semibold py-3 rounded-lg hover:bg-bosque-700 transition text-base">
                       Pagar {sol.coste.toFixed(2)} €
                     </button>
-                    <button onClick={() => handleCancelar(sol.id)} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                    <button onClick={() => { if (window.confirm('¿Estás seguro de que quieres cancelar esta solicitud?')) handleCancelar(sol.id); }} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                       Cancelar
                     </button>
                   </div>
                 )}
-                {sol.pagado && <span className="mt-3 text-base text-green-600 font-semibold block">✓ Pagado</span>}
+                {sol.pagado && sol.estado === 'pendiente' && (
+                  <div className="flex gap-3 mt-4 items-center">
+                    <span className="text-base text-green-600 font-semibold">✓ Pagado</span>
+                    <button onClick={() => { if (window.confirm('¿Estás seguro? La solicitud se cancelará sin reembolso.')) handleCancelar(sol.id); }} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                      Cancelar
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

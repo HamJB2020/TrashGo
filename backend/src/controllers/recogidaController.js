@@ -257,12 +257,12 @@ exports.aceptarRecogida = async (req, res) => {
 exports.cancelarRecogida = async (req, res) => {
   try {
     const recogida = await Recogida.findOneAndUpdate(
-      { _id: req.params.id, usuario_id: req.user.id, estado: 'pendiente', pagado: false },
+      { _id: req.params.id, usuario_id: req.user.id, estado: 'pendiente' },
       { estado: 'cancelada' },
       { new: true }
     );
     if (!recogida) {
-      return res.status(404).json({ error: 'No se puede cancelar. La solicitud no existe, ya fue pagada o ya está en proceso.', code: 'NOT_FOUND' });
+      return res.status(404).json({ error: 'No se puede cancelar. La solicitud no existe o ya no está pendiente.', code: 'NOT_FOUND' });
     }
     return res.status(200).json({ success: true, data: { id: recogida._id, estado: recogida.estado }, mensaje: 'Solicitud cancelada' });
   } catch (error) {

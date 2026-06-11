@@ -85,7 +85,7 @@ const PRECIOS_MATERIAL = {
   'aceite': 2.00, 'escombros': 1.20, 'poda/jardín': 0.50, 'voluminoso': 2.50,
 };
 
-const MULTIPLICADOR_CUANDO = { hoy: 1.0, manana: 1.15, custom: 1.3 };
+const MULTIPLICADOR_CUANDO = { hoy: 1.3, manana: 1.15, custom: 1.0 };
 const MULTIPLICADOR_URGENCIA = { normal: 1.0, alta: 1.25 };
 
 function calcularCoste(tipos, cuando, urgencia, peso) {
@@ -384,7 +384,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                 ))}
               </div>
               {cuando === 'custom' && (
-                <input type="datetime-local" value={fechaCustom} onChange={(e) => setFechaCustom(e.target.value)}
+                <input type="date" value={fechaCustom} onChange={(e) => setFechaCustom(e.target.value)}
                   className="mt-2 w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500" />
               )}
               {errors.fechaCustom && <p className="text-red-600 text-xs mt-1">{errors.fechaCustom}</p>}
@@ -403,7 +403,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                 </div>
                 <div className="text-xs text-gray-500 mt-2 space-y-1">
                   <p>{formData.tipoResiduo.map(t => `${t} (${PRECIOS_MATERIAL[t]}€/kg × ${formData.peso} kg = ${(PRECIOS_MATERIAL[t] * formData.peso).toFixed(2)}€)`).join(', ')}</p>
-                  <p>Cuándo: {cuando === 'hoy' ? 'Hoy (×1.0)' : cuando === 'manana' ? 'Mañana (×1.15)' : 'Programado (×1.3)'} | Urgencia: {formData.urgencia === 'normal' ? 'Normal (×1.0)' : 'Alta (×1.25)'}</p>
+                  <p>Cuándo: {cuando === 'hoy' ? 'Hoy (×1.3)' : cuando === 'manana' ? 'Mañana (×1.15)' : 'Programado (×1.0)'} | Urgencia: {formData.urgencia === 'normal' ? 'Normal (×1.0)' : 'Alta (×1.25)'}</p>
                 </div>
               </div>
             )}
