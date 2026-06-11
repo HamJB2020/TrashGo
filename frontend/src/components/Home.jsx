@@ -29,12 +29,14 @@ export default function Home() {
           >
             Empezar ahora
           </Link>
-          <Link
-            to="/login"
-            className="border-2 border-bosque-600 text-bosque-600 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-bosque-50 transition"
-          >
-            Iniciar sesión
-          </Link>
+          {!token && (
+            <Link
+              to="/login"
+              className="border-2 border-bosque-600 text-bosque-600 px-8 py-3 rounded-lg font-semibold text-lg hover:bg-bosque-50 transition"
+            >
+              Iniciar sesión
+            </Link>
+          )}
         </div>
       </section>
 

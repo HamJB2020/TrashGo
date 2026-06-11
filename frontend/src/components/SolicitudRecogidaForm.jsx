@@ -79,25 +79,19 @@ async function geocodeAddress(direccion) {
 }
 
 const PRECIOS_MATERIAL = {
-  'orgánico': 3, 'inorgánico': 3, 'mixto': 4, 'especial': 10,
-  'vidrio': 4, 'plástico': 4, 'papel/cartón': 3, 'metal': 5,
-  'electrónico': 8, 'madera': 5, 'textil': 4, 'pilas/baterías': 6,
-  'aceite': 5, 'escombros': 7, 'poda/jardín': 4, 'voluminoso': 8,
+  'orgánico': 0.30, 'inorgánico': 0.40, 'mixto': 0.50, 'especial': 5.00,
+  'vidrio': 0.40, 'plástico': 0.60, 'papel/cartón': 0.30, 'metal': 1.50,
+  'electrónico': 3.00, 'madera': 0.80, 'textil': 1.00, 'pilas/baterías': 4.00,
+  'aceite': 2.00, 'escombros': 1.20, 'poda/jardín': 0.50, 'voluminoso': 2.50,
 };
 
 const MULTIPLICADOR_CUANDO = { hoy: 1.0, manana: 1.15, custom: 1.3 };
 const MULTIPLICADOR_URGENCIA = { normal: 1.0, alta: 1.25 };
 
-function multiplicadorPeso(peso) {
-  if (!peso || peso <= 10) return 1.0;
-  if (peso <= 25) return 1.3;
-  return 1.6;
-}
-
 function calcularCoste(tipos, cuando, urgencia, peso) {
   if (!Array.isArray(tipos) || tipos.length === 0) return 0;
-  const base = tipos.reduce((sum, t) => sum + (PRECIOS_MATERIAL[t] || 0), 0);
-  return base * (MULTIPLICADOR_CUANDO[cuando] || 1) * (MULTIPLICADOR_URGENCIA[urgencia] || 1) * multiplicadorPeso(peso);
+  const totalKg = tipos.reduce((sum, t) => sum + (PRECIOS_MATERIAL[t] || 0), 0) * (peso || 1);
+  return totalKg * (MULTIPLICADOR_CUANDO[cuando] || 1) * (MULTIPLICADOR_URGENCIA[urgencia] || 1);
 }
 
 export default function SolicitudRecogidaForm({ simple, onSuccess }) {
@@ -213,7 +207,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   };
 
   const handleAddressBlur = useCallback(async () => {
-    if (!formData.calle.trim() || posicion) return;
+    if (!formData.calle.trim()) return;
     const q = [formData.calle, formData.numero, formData.ciudad].filter(Boolean).join(', ');
     const result = await geocodeAddress(q);
     if (result) {
@@ -223,7 +217,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     } else {
       setErrors(prev => ({ ...prev, direccion: 'Dirección no encontrada. Coloca un pin en el mapa.' }));
     }
-  }, [formData.calle, formData.numero, formData.ciudad, posicion]);
+  }, [formData.calle, formData.numero, formData.ciudad]);
 
   const validarFormulario = () => {
     const nuevosErrores = {};
@@ -330,15 +324,19 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
               </div>
               <p className="text-xs text-gray-400 mt-1">Haz clic en el mapa para colocar el pin o arrastra el pin para ajustar.</p>
 
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                <div className="col-span-2">
-                  <input type="text" name="calle" value={formData.calle} onChange={handleInputChange} onBlur={handleAddressBlur}
+              <div className="mt-2 flex gap-2">
+                <div className="flex-1">
+                  <input type="text" name="calle" value={formData.calle} onChange={handleInputChange}
                     placeholder="Calle *"
                     className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition ${errors.calle ? 'border-red-500' : 'border-gray-300'}`}
                   />
                   {errors.calle && <p className="text-red-600 text-xs mt-1">{errors.calle}</p>}
                 </div>
-                <div>
+                <button type="button" onClick={handleAddressBlur}
+                  className="px-4 py-2 text-sm bg-bosque-600 text-white rounded-lg hover:bg-bosque-700 transition font-semibold self-start">
+                  Buscar
+                </button>
+                <div className="w-20">
                   <input type="text" name="numero" value={formData.numero} onChange={handleInputChange}
                     placeholder="Nº"
                     className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500"
@@ -404,8 +402,8 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                   <span className="text-2xl font-bold text-bosque-800">{calcularCoste(formData.tipoResiduo, cuando, formData.urgencia, formData.peso).toFixed(2)} €</span>
                 </div>
                 <div className="text-xs text-gray-500 mt-2 space-y-1">
-                  <p>Materiales: {formData.tipoResiduo.map(t => `${t} (${PRECIOS_MATERIAL[t]}€)`).join(', ')}</p>
-                  <p>Peso: {formData.peso} kg (×{multiplicadorPeso(formData.peso).toFixed(1)}) | Cuándo: {cuando === 'hoy' ? 'Hoy (×1.0)' : cuando === 'manana' ? 'Mañana (×1.15)' : 'Programado (×1.3)'} | Urgencia: {formData.urgencia === 'normal' ? 'Normal (×1.0)' : 'Alta (×1.25)'}</p>
+                  <p>{formData.tipoResiduo.map(t => `${t} (${PRECIOS_MATERIAL[t]}€/kg × ${formData.peso} kg = ${(PRECIOS_MATERIAL[t] * formData.peso).toFixed(2)}€)`).join(', ')}</p>
+                  <p>Cuándo: {cuando === 'hoy' ? 'Hoy (×1.0)' : cuando === 'manana' ? 'Mañana (×1.15)' : 'Programado (×1.3)'} | Urgencia: {formData.urgencia === 'normal' ? 'Normal (×1.0)' : 'Alta (×1.25)'}</p>
                 </div>
               </div>
             )}
