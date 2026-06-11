@@ -130,9 +130,9 @@ export default function RiderDashboard() {
                 {sol.usuario_nombre && <p className="text-xs text-gray-400 mt-1">Cliente: {sol.usuario_nombre}</p>}
                 {sol.usuario_telefono && <p className="text-xs text-gray-400">📞 {sol.usuario_telefono}</p>}
                 {sol.coste != null && <p className="text-xs font-semibold text-bosque-700 mt-1">{sol.coste.toFixed(2)} € {sol.pagado ? '✓ Pagado' : '(pendiente)'}</p>}
-                <button onClick={() => setConfirmAction({ type: 'aceptar', id: sol.id })}
-                  className="mt-3 w-full bg-bosque-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-bosque-700 transition">
-                  Aceptar solicitud
+<button onClick={() => setConfirmAction({ type: 'aceptar', id: sol.id })}
+                   className="mt-3 w-full bg-green-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-green-700 transition">
+                   Aceptar solicitud
                 </button>
               </div>
             ))}

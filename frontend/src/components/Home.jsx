@@ -9,6 +9,11 @@ const pasos = [
 
 export default function Home() {
   const token = localStorage.getItem('token');
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('usuario'));
+  } catch {}
+  const destino = token ? (user?.rol === 'rider' ? '/rider' : '/dashboard') : '/register';
 
   return (
     <div className="bg-fondo min-h-[calc(100vh-64px)]">
@@ -24,7 +29,7 @@ export default function Home() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            to={token ? '/dashboard' : '/register'}
+            to={destino}
             className="bg-bosque-600 text-white px-8 py-3 rounded-lg font-semibold text-lg hover:bg-bosque-700 transition shadow-md"
           >
             Empezar ahora

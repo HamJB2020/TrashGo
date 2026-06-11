@@ -182,7 +182,7 @@ export default function SolicitudesPage() {
                 {sol.peso && <p className="text-sm text-gray-400 mt-2">Peso: {sol.peso} kg</p>}
                 {sol.estado === 'pendiente' && !sol.pagado && sol.coste > 0 && (
                   <div className="flex gap-3 mt-4">
-                    <button onClick={() => setConfirmPagar(sol)} className="flex-1 bg-bosque-600 text-white font-semibold py-3 rounded-lg hover:bg-bosque-700 transition text-base">
+                    <button onClick={() => setConfirmPagar(sol)} className="flex-1 bg-green-600 text-white font-semibold py-3 rounded-lg hover:bg-green-700 transition text-base">
                       Pagar {sol.coste.toFixed(2)} €
                     </button>
                     <button onClick={() => setConfirmCancel({ id: sol.id, pagado: false })} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">

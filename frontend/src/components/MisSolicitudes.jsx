@@ -176,7 +176,7 @@ export default function MisSolicitudes({ refreshKey }) {
             {sol.peso && <p className="text-xs text-gray-400 mt-1">Peso: {sol.peso} kg</p>}
             {sol.estado === 'pendiente' && !sol.pagado && sol.coste > 0 && (
               <div className="flex gap-2 mt-2">
-                <button onClick={() => setConfirmPagar(sol)} className="flex-1 bg-bosque-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-bosque-700 transition">
+                <button onClick={() => setConfirmPagar(sol)} className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-green-700 transition">
                   Pagar {sol.coste.toFixed(2)} €
                 </button>
                 <button onClick={() => setConfirmCancel({ id: sol.id, pagado: sol.pagado })} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">

@@ -82,7 +82,7 @@ export default function Register() {
       delete payload.esRider;
       await api.post('/auth/register', payload);
       setSuccessMessage('Registrado correctamente. Redirigiendo al inicio de sesión...');
-      setTimeout(() => navigate('/login'), 5000);
+      setTimeout(() => navigate('/login'), 3000);
     } catch (error) {
       console.error('Error al registrar usuario:', error);
       if (error.response?.data?.message) setErrorMessage(error.response.data.message);
