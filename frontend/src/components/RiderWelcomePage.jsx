@@ -45,15 +45,10 @@ export default function RiderWelcomePage() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-8 justify-center">
-          <Link to="/rider"
+          <Link to="/rider/dashboard"
             className="bg-tierra-500 hover:bg-tierra-600 text-white font-bold text-lg px-10 py-4 rounded-2xl transition shadow-xl text-center"
           >
             🚀 ¡Aceptar misión!
-          </Link>
-          <Link to="/dashboard"
-            className="bg-white/10 hover:bg-white/20 text-white font-semibold px-8 py-4 rounded-2xl transition text-center border border-white/20"
-          >
-            Volver al panel
           </Link>
         </div>
 

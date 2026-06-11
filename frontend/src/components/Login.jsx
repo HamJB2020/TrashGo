@@ -71,7 +71,7 @@ export default function Login({ onLogin }) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('usuario', JSON.stringify(data.usuario));
       onLogin(data.usuario);
-      navigate('/dashboard');
+      navigate(data.usuario.rol === 'rider' ? '/rider' : '/dashboard');
 
     } catch (error) {
       console.error('Error al iniciar sesión:', error);

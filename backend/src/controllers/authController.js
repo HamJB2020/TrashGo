@@ -132,7 +132,7 @@ exports.login = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: { usuario: { id: usuario._id, username: usuario.nombre, email: usuario.email }, token }
+      data: { usuario: { id: usuario._id, username: usuario.nombre, email: usuario.email, rol: usuario.rol }, token }
     });
 
   } catch (error) {
