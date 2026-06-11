@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 
 export default function ContactoPage() {
@@ -7,6 +7,19 @@ export default function ContactoPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await api.get('/auth/perfil');
+        const data = res.data.data;
+        if (data) setForm(prev => ({ ...prev, nombre: data.nombre || '', email: data.email || '' }));
+      } catch {}
+    };
+    fetchProfile();
+  }, []);
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));

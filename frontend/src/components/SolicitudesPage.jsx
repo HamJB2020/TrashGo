@@ -138,7 +138,7 @@ export default function SolicitudesPage() {
                   <span>📍</span>
                   <span>{sol.direccion}</span>
                 </div>
-                {sol.fecha_programada && (
+                {sol.fecha_programada && sol.estado === 'pendiente' && (
                   <div className="flex items-center gap-2 mt-2 text-base text-gray-500">
                     <span>⏰</span>
                     <CuentaAtras fecha={sol.fecha_programada} />

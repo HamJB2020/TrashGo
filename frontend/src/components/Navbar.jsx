@@ -17,12 +17,9 @@ export default function Navbar({ user, onLogout }) {
         TrashGo
       </Link>
       <div className="flex items-center gap-2">
-        <Link to="/contacto" className="bg-bosque-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-bosque-700 transition">
-          Contacto
-        </Link>
         {user ? (
           <>
-            <Link to="/perfil" className="text-sm font-medium text-gray-600 hover:text-bosque-600 transition ml-2">{user}</Link>
+            <Link to="/perfil" className="text-sm font-medium text-gray-600 hover:text-bosque-600 transition">{user}</Link>
             <button
               onClick={handleLogout}
               className="bg-bosque-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-bosque-700 transition"
@@ -43,6 +40,9 @@ export default function Navbar({ user, onLogout }) {
             </Link>
           </>
         )}
+        <Link to="/contacto" className="bg-bosque-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-bosque-700 transition">
+          Contacto
+        </Link>
       </div>
     </nav>
   );
