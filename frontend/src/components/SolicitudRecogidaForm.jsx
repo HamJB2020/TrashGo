@@ -40,7 +40,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   const [buscandoDir, setBuscandoDir] = useState(false);
   const [formData, setFormData] = useState({
     direccion: localStorage.getItem('direccion_predeterminada') || '',
-    tipoResiduo: 'mixto',
+    tipoResiduo: [],
     descripcion: '',
     urgencia: 'normal',
   });
@@ -98,11 +98,16 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
   const validarFormulario = () => {
     const nuevosErrores = {};
-    if (!formData.direccion.trim()) {
-      nuevosErrores.direccion = 'Coloca un pin en el mapa o escribe la dirección';
+    if (!posicion && !formData.direccion.trim()) {
+      nuevosErrores.direccion = 'Coloca un pin en el mapa para indicar la ubicación';
+    }
+    if (cuando === 'custom' && !fechaCustom) {
+      nuevosErrores.fechaCustom = 'Selecciona una fecha y hora';
     }
     const tiposValidos = ['orgánico', 'inorgánico', 'mixto', 'especial', 'vidrio', 'plástico', 'papel/cartón', 'metal', 'electrónico', 'madera', 'textil', 'pilas/baterías', 'aceite', 'escombros', 'poda/jardín', 'voluminoso'];
-    if (!tiposValidos.includes(formData.tipoResiduo)) {
+    if (!Array.isArray(formData.tipoResiduo) || formData.tipoResiduo.length === 0) {
+      nuevosErrores.tipoResiduo = 'Selecciona al menos un tipo de residuo';
+    } else if (formData.tipoResiduo.some(t => !tiposValidos.includes(t))) {
       nuevosErrores.tipoResiduo = 'Tipo de residuo inválido';
     }
     return nuevosErrores;
@@ -143,7 +148,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
       if (guardarDir && formData.direccion) localStorage.setItem('direccion_predeterminada', formData.direccion);
 
       setSuccessMessage('Solicitud creada. Venimos en ' + formatearCuentaAtras(calcularFechaProgramada()));
-      setFormData({ direccion: localStorage.getItem('direccion_predeterminada') || '', tipoResiduo: 'mixto', descripcion: '', urgencia: 'normal' });
+      setFormData({ direccion: localStorage.getItem('direccion_predeterminada') || '', tipoResiduo: [], descripcion: '', urgencia: 'normal' });
       setCuando('hoy');
       setFechaCustom('');
       setPosicion(null);
@@ -234,6 +239,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                 <input type="datetime-local" value={fechaCustom} onChange={(e) => setFechaCustom(e.target.value)}
                   className="mt-2 w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500" />
               )}
+              {errors.fechaCustom && <p className="text-red-600 text-xs mt-1">{errors.fechaCustom}</p>}
               {fechaProg && (
                 <p className="text-sm text-bosque-700 font-semibold mt-2">
                   Venimos en {formatearCuentaAtras(fechaProg)}
@@ -242,26 +248,41 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
             </div>
 
             <div>
-              <label htmlFor="tipoResiduo" className="block text-sm font-semibold text-gray-700 mb-2">Tipo de Residuo *</label>
-              <select id="tipoResiduo" name="tipoResiduo" value={formData.tipoResiduo} onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 bg-white text-sm">
-                <option value="mixto">Mixto (varios tipos)</option>
-                <option value="orgánico">Orgánico</option>
-                <option value="inorgánico">Inorgánico</option>
-                <option value="vidrio">Vidrio</option>
-                <option value="plástico">Plástico</option>
-                <option value="papel/cartón">Papel / Cartón</option>
-                <option value="metal">Metal</option>
-                <option value="electrónico">Electrónico (RAEE)</option>
-                <option value="madera">Madera</option>
-                <option value="textil">Textil</option>
-                <option value="pilas/baterías">Pilas / Baterías</option>
-                <option value="aceite">Aceite</option>
-                <option value="escombros">Escombros</option>
-                <option value="poda/jardín">Poda / Jardín</option>
-                <option value="voluminoso">Voluminoso (muebles, etc.)</option>
-                <option value="especial">Especial (peligrosos)</option>
-              </select>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Tipos de Residuo *</label>
+              <p className="text-xs text-gray-400 mb-2">Selecciona uno o varios tipos:</p>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: 'orgánico', label: 'Orgánico' },
+                  { value: 'inorgánico', label: 'Inorgánico' },
+                  { value: 'vidrio', label: 'Vidrio' },
+                  { value: 'plástico', label: 'Plástico' },
+                  { value: 'papel/cartón', label: 'Papel / Cartón' },
+                  { value: 'metal', label: 'Metal' },
+                  { value: 'electrónico', label: 'Electrónico (RAEE)' },
+                  { value: 'madera', label: 'Madera' },
+                  { value: 'textil', label: 'Textil' },
+                  { value: 'pilas/baterías', label: 'Pilas / Baterías' },
+                  { value: 'aceite', label: 'Aceite' },
+                  { value: 'escombros', label: 'Escombros' },
+                  { value: 'poda/jardín', label: 'Poda / Jardín' },
+                  { value: 'voluminoso', label: 'Voluminoso' },
+                  { value: 'especial', label: 'Especial (peligrosos)' },
+                  { value: 'mixto', label: 'Mixto (varios)' },
+                ].map(({ value, label }) => (
+                  <label key={value} className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition text-sm ${formData.tipoResiduo.includes(value) ? 'bg-bosque-50 border-bosque-500' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input type="checkbox" checked={formData.tipoResiduo.includes(value)} onChange={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        tipoResiduo: prev.tipoResiduo.includes(value)
+                          ? prev.tipoResiduo.filter(t => t !== value)
+                          : [...prev.tipoResiduo, value]
+                      }));
+                      if (errors.tipoResiduo) setErrors(prev => ({ ...prev, tipoResiduo: '' }));
+                    }} className="w-4 h-4 text-bosque-600 rounded border-gray-300" />
+                    {label}
+                  </label>
+                ))}
+              </div>
               {errors.tipoResiduo && <p className="text-red-600 text-xs mt-1">{errors.tipoResiduo}</p>}
             </div>
 
@@ -284,6 +305,12 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                   <span className="ml-2 text-sm text-gray-700">Alta</span>
                 </label>
               </div>
+              {formData.urgencia === 'alta' && (
+                <p className="text-xs text-red-600 mt-1">Se priorizará la recogida nada más llegar el recolector. Diferencia estimada: 1-5 min</p>
+              )}
+              {formData.urgencia === 'normal' && (
+                <p className="text-xs text-gray-500 mt-1">Se recogerá cuando haya tiempo disponible. Diferencia estimada: 10-30 min</p>
+              )}
             </div>
 
             <button type="submit" disabled={isLoading}

@@ -6,6 +6,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Perfil from './components/Perfil';
+import SolicitudesPage from './components/SolicitudesPage';
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -27,6 +28,10 @@ function App() {
           <Route
             path="/perfil"
             element={user ? <Perfil user={user} onLogout={() => setUser(null)} /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/solicitudes"
+            element={user ? <SolicitudesPage /> : <Navigate to="/login" />}
           />
       </Routes>
     </BrowserRouter>

@@ -5,7 +5,7 @@ const recogidaSchema = new mongoose.Schema({
   direccion: { type: String, required: true, trim: true },
   latitud: { type: Number },
   longitud: { type: Number },
-  tipo_residuo: { type: String, required: true, enum: ['orgánico', 'inorgánico', 'mixto', 'especial', 'vidrio', 'plástico', 'papel/cartón', 'metal', 'electrónico', 'madera', 'textil', 'pilas/baterías', 'aceite', 'escombros', 'poda/jardín', 'voluminoso'] },
+  tipo_residuo: [{ type: String, enum: ['orgánico', 'inorgánico', 'mixto', 'especial', 'vidrio', 'plástico', 'papel/cartón', 'metal', 'electrónico', 'madera', 'textil', 'pilas/baterías', 'aceite', 'escombros', 'poda/jardín', 'voluminoso'] }],
   descripcion: { type: String, trim: true },
   urgencia: { type: String, enum: ['normal', 'alta'], default: 'normal' },
   estado: { type: String, enum: ['pendiente', 'aceptada', 'completada', 'cancelada'], default: 'pendiente' },

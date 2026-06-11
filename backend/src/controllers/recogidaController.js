@@ -14,7 +14,7 @@ exports.crearRecogida = async (req, res) => {
       }
     }
 
-    const { direccion, tipoResiduo, descripcion, urgencia } = req.body;
+    let { direccion, tipoResiduo, descripcion, urgencia } = req.body;
 
     if (!direccion || !tipoResiduo) {
       return res.status(400).json({
@@ -24,9 +24,16 @@ exports.crearRecogida = async (req, res) => {
     }
 
     const tiposValidos = ['orgánico', 'inorgánico', 'mixto', 'especial', 'vidrio', 'plástico', 'papel/cartón', 'metal', 'electrónico', 'madera', 'textil', 'pilas/baterías', 'aceite', 'escombros', 'poda/jardín', 'voluminoso'];
-    if (!tiposValidos.includes(tipoResiduo.toLowerCase())) {
+
+    if (!Array.isArray(tipoResiduo)) {
+      tipoResiduo = [tipoResiduo];
+    }
+
+    const tiposNormalizados = tipoResiduo.map(t => t.toLowerCase());
+    const invalidos = tiposNormalizados.filter(t => !tiposValidos.includes(t));
+    if (invalidos.length > 0) {
       return res.status(400).json({
-        error: `Tipo de residuo inválido. Debe ser uno de: ${tiposValidos.join(', ')}`,
+        error: `Tipo(s) de residuo inválido(s): ${invalidos.join(', ')}. Válidos: ${tiposValidos.join(', ')}`,
         code: 'INVALID_RESIDUE_TYPE'
       });
     }
@@ -43,7 +50,7 @@ exports.crearRecogida = async (req, res) => {
       direccion: direccion.trim(),
       latitud: req.body.latitud || null,
       longitud: req.body.longitud || null,
-      tipo_residuo: tipoResiduo.toLowerCase(),
+      tipo_residuo: tiposNormalizados,
       descripcion: descripcion || null,
       urgencia: urgencia || 'normal',
       fecha_programada: req.body.fechaProgramada || null
@@ -113,7 +120,7 @@ exports.listadoDisponibles = async (req, res) => {
     const filtro = { estado, rider_id: null };
 
     if (tipoResiduo) {
-      filtro.tipo_residuo = tipoResiduo.toLowerCase();
+      filtro.tipo_residuo = { $in: [tipoResiduo.toLowerCase()] };
     }
 
     const [recogidas, total] = await Promise.all([

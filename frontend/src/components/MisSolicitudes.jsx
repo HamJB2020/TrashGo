@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -100,7 +101,7 @@ export default function MisSolicitudes({ refreshKey }) {
               {sol.urgencia === 'alta' && <span className="text-xs font-bold text-red-600">URGENTE</span>}
             </div>
 
-            <p className="text-sm text-gray-700 font-semibold">{sol.tipo_residuo}</p>
+            <p className="text-sm text-gray-700 font-semibold">{Array.isArray(sol.tipo_residuo) ? sol.tipo_residuo.join(', ') : sol.tipo_residuo}</p>
             {sol.descripcion && <p className="text-xs text-gray-500 mt-1">{sol.descripcion}</p>}
 
             <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
@@ -130,6 +131,7 @@ export default function MisSolicitudes({ refreshKey }) {
           </div>
         ))}
       </div>
+      <Link to="/solicitudes" className="block text-center text-sm text-bosque-600 hover:text-bosque-700 font-semibold mt-4 pt-3 border-t border-gray-100 transition">Ver todas las solicitudes →</Link>
     </div>
   );
 }
