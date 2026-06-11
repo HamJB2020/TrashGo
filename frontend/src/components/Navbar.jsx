@@ -22,6 +22,9 @@ export default function Navbar({ user, onLogout }) {
         {user ? (
           <>
             <Link to="/perfil" className="text-sm font-medium text-gray-600 hover:text-bosque-600 transition">{user}</Link>
+            <Link to="/rider" className="text-sm font-semibold text-gray-600 hover:text-bosque-600 transition">
+              Rider
+            </Link>
             <button
               onClick={() => setShowConfirm(true)}
               className="bg-bosque-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-bosque-700 transition"

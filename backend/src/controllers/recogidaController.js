@@ -254,6 +254,67 @@ exports.aceptarRecogida = async (req, res) => {
   }
 };
 
+exports.misAceptadas = async (req, res) => {
+  try {
+    const recogidas = await Recogida.find({ rider_id: req.user.id, estado: { $in: ['aceptada', 'completada'] } })
+      .populate('usuario_id', 'nombre telefono')
+      .sort({ fecha_aceptacion: -1 })
+      .lean();
+
+    const data = recogidas.map(r => ({
+      id: r._id,
+      direccion: r.direccion,
+      latitud: r.latitud,
+      longitud: r.longitud,
+      tipo_residuo: r.tipo_residuo,
+      urgencia: r.urgencia,
+      estado: r.estado,
+      fecha_programada: r.fecha_programada,
+      fecha_aceptacion: r.fecha_aceptacion,
+      usuario_nombre: r.usuario_id?.nombre,
+      usuario_telefono: r.usuario_id?.telefono,
+      peso: r.peso,
+      pagado: r.pagado
+    }));
+
+    return res.status(200).json({ success: true, data });
+
+  } catch (error) {
+    console.error('Error al obtener mis aceptadas:', error);
+    return res.status(500).json({ error: 'Error interno del servidor', code: 'SERVER_ERROR' });
+  }
+};
+
+exports.completarRecogida = async (req, res) => {
+  try {
+    const recogida = await Recogida.findOneAndUpdate(
+      { _id: req.params.id, rider_id: req.user.id, estado: 'aceptada' },
+      { estado: 'completada' },
+      { new: true }
+    );
+
+    if (!recogida) {
+      return res.status(404).json({
+        error: 'Recogida no encontrada o no puedes completarla',
+        code: 'NOT_FOUND'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { id: recogida._id, estado: recogida.estado },
+      mensaje: 'Recogida completada'
+    });
+
+  } catch (error) {
+    console.error('Error al completar recogida:', error);
+    return res.status(500).json({
+      error: 'Error interno del servidor',
+      code: 'SERVER_ERROR'
+    });
+  }
+};
+
 exports.cancelarRecogida = async (req, res) => {
   try {
     const recogida = await Recogida.findOneAndUpdate(

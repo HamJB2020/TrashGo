@@ -12,9 +12,13 @@ router.use(verifyToken);
 
 router.get('/mis-recogidas', recogidaController.obtenerMisRecogidas);
 
+router.get('/mis-aceptadas', recogidaController.misAceptadas);
+
 router.get('/:id', recogidaController.obtenerRecogida);
 
 router.put('/:id/aceptar', recogidaController.aceptarRecogida);
+
+router.put('/:id/completar', recogidaController.completarRecogida);
 
 router.put('/:id/pagar', recogidaController.pagarRecogida);
 

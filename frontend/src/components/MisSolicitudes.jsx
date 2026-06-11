@@ -55,6 +55,7 @@ export default function MisSolicitudes({ refreshKey }) {
   const [pagarSolicitud, setPagarSolicitud] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [confirmCancel, setConfirmCancel] = useState(null);
+  const [confirmPagar, setConfirmPagar] = useState(null);
   const enviando = useRef(false);
 
   const handlePagar = async (id) => {
@@ -175,7 +176,7 @@ export default function MisSolicitudes({ refreshKey }) {
             {sol.peso && <p className="text-xs text-gray-400 mt-1">Peso: {sol.peso} kg</p>}
             {sol.estado === 'pendiente' && !sol.pagado && sol.coste > 0 && (
               <div className="flex gap-2 mt-2">
-                <button onClick={() => setPagarSolicitud(sol)} className="flex-1 bg-bosque-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-bosque-700 transition">
+                <button onClick={() => setConfirmPagar(sol)} className="flex-1 bg-bosque-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-bosque-700 transition">
                   Pagar {sol.coste.toFixed(2)} €
                 </button>
                 <button onClick={() => setConfirmCancel({ id: sol.id, pagado: sol.pagado })} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
@@ -195,6 +196,14 @@ export default function MisSolicitudes({ refreshKey }) {
         ))}
       </div>
       <Link to="/solicitudes" className="block text-center text-sm text-bosque-600 hover:text-bosque-700 font-semibold mt-4 pt-3 border-t border-gray-100 transition">Ver todas las solicitudes →</Link>
+      {confirmPagar && (
+        <ConfirmModal
+          mensaje={`¿Confirmas el pago de ${confirmPagar.coste.toFixed(2)} € por esta solicitud?`}
+          confirmText="Sí, pagar"
+          onConfirm={() => { setPagarSolicitud(confirmPagar); setConfirmPagar(null); }}
+          onCancel={() => setConfirmPagar(null)}
+        />
+      )}
       {pagarSolicitud && (
         <PaymentModal coste={pagarSolicitud.coste} onClose={() => setPagarSolicitud(null)} onSuccess={() => handlePagar(pagarSolicitud.id)} />
       )}

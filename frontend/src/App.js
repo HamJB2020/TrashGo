@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard';
 import Perfil from './components/Perfil';
 import SolicitudesPage from './components/SolicitudesPage';
 import ContactoPage from './components/ContactoPage';
+import RiderDashboard from './components/RiderDashboard';
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -23,6 +24,10 @@ function App() {
         <Route path="/login" element={<Login onLogin={(u) => setUser(u)} />} />
           <Route path="/register" element={<Register />} />
           <Route path="/contacto" element={<ContactoPage />} />
+          <Route
+            path="/rider"
+            element={user ? <RiderDashboard /> : <Navigate to="/login" />}
+          />
           <Route
             path="/dashboard"
             element={user ? <Dashboard /> : <Navigate to="/login" />}
