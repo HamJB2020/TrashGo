@@ -12,7 +12,8 @@ const recogidaSchema = new mongoose.Schema({
   rider_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', default: null },
   fecha_aceptacion: { type: Date },
   fecha_programada: { type: Date },
-  coste: { type: Number, default: 0 }
+  coste: { type: Number, default: 0 },
+  pagado: { type: Boolean, default: false }
 }, { timestamps: { createdAt: 'fecha_creacion', updatedAt: 'fecha_actualizacion' } });
 
 module.exports = mongoose.model('Recogida', recogidaSchema);

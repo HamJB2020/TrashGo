@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
+import PaymentModal from './PaymentModal';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -49,6 +50,16 @@ function CuentaAtras({ fecha }) {
 export default function MisSolicitudes({ refreshKey }) {
   const [solicitudes, setSolicitudes] = useState([]);
   const cargando = useRef(false);
+  const [pagarSolicitud, setPagarSolicitud] = useState(null);
+
+  const handlePagar = async (id) => {
+    try {
+      await api.put(`/recogidas/${id}/pagar`);
+      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, pagado: true } : s));
+    } catch (err) {
+      console.error('Error al pagar:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -131,10 +142,19 @@ export default function MisSolicitudes({ refreshKey }) {
                 </MapContainer>
               </div>
             )}
+            {sol.estado === 'pendiente' && !sol.pagado && sol.coste > 0 && (
+              <button onClick={() => setPagarSolicitud(sol)} className="mt-2 w-full bg-bosque-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-bosque-700 transition">
+                Pagar {sol.coste.toFixed(2)} €
+              </button>
+            )}
+            {sol.pagado && <span className="mt-2 text-xs text-green-600 font-semibold block">✓ Pagado</span>}
           </div>
         ))}
       </div>
       <Link to="/solicitudes" className="block text-center text-sm text-bosque-600 hover:text-bosque-700 font-semibold mt-4 pt-3 border-t border-gray-100 transition">Ver todas las solicitudes →</Link>
+      {pagarSolicitud && (
+        <PaymentModal coste={pagarSolicitud.coste} onClose={() => setPagarSolicitud(null)} onSuccess={() => handlePagar(pagarSolicitud.id)} />
+      )}
     </div>
   );
 }

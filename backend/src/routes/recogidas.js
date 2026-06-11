@@ -16,4 +16,6 @@ router.get('/:id', recogidaController.obtenerRecogida);
 
 router.put('/:id/aceptar', recogidaController.aceptarRecogida);
 
+router.put('/:id/pagar', recogidaController.pagarRecogida);
+
 module.exports = router;

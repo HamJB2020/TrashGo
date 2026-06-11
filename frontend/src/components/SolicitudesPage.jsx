@@ -4,6 +4,7 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
+import PaymentModal from './PaymentModal';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -49,7 +50,17 @@ function CuentaAtras({ fecha }) {
 export default function SolicitudesPage() {
   const [solicitudes, setSolicitudes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [pagarSolicitud, setPagarSolicitud] = useState(null);
   const cargando = useRef(false);
+
+  const handlePagar = async (id) => {
+    try {
+      await api.put(`/recogidas/${id}/pagar`);
+      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, pagado: true } : s));
+    } catch (err) {
+      console.error('Error al pagar:', err);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -138,11 +149,20 @@ export default function SolicitudesPage() {
                     </MapContainer>
                   </div>
                 )}
+                {sol.estado === 'pendiente' && !sol.pagado && sol.coste > 0 && (
+                  <button onClick={() => setPagarSolicitud(sol)} className="mt-4 w-full bg-bosque-600 text-white font-semibold py-3 rounded-lg hover:bg-bosque-700 transition text-base">
+                    Pagar {sol.coste.toFixed(2)} €
+                  </button>
+                )}
+                {sol.pagado && <span className="mt-3 text-base text-green-600 font-semibold block">✓ Pagado</span>}
               </div>
             ))}
           </div>
         )}
       </div>
+      {pagarSolicitud && (
+        <PaymentModal coste={pagarSolicitud.coste} onClose={() => setPagarSolicitud(null)} onSuccess={() => handlePagar(pagarSolicitud.id)} />
+      )}
     </div>
   );
 }

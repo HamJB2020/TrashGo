@@ -85,6 +85,23 @@ exports.crearRecogida = async (req, res) => {
   }
 };
 
+exports.pagarRecogida = async (req, res) => {
+  try {
+    const recogida = await Recogida.findOneAndUpdate(
+      { _id: req.params.id, usuario_id: req.user.id, pagado: false },
+      { pagado: true },
+      { new: true }
+    );
+    if (!recogida) {
+      return res.status(404).json({ error: 'Recogida no encontrada o ya pagada', code: 'NOT_FOUND' });
+    }
+    return res.status(200).json({ success: true, data: { id: recogida._id, pagado: true } });
+  } catch (error) {
+    console.error('Error al procesar pago:', error);
+    return res.status(500).json({ error: 'Error interno del servidor', code: 'SERVER_ERROR' });
+  }
+};
+
 exports.obtenerRecogida = async (req, res) => {
   try {
     const recogida = await Recogida.findOne({
@@ -142,6 +159,7 @@ exports.listadoDisponibles = async (req, res) => {
       estado: r.estado,
       fecha_creacion: r.fecha_creacion,
       coste: r.coste,
+      pagado: r.pagado,
       usuario_nombre: r.usuario_id?.nombre,
       usuario_telefono: r.usuario_id?.telefono
     }));
@@ -183,7 +201,8 @@ exports.obtenerMisRecogidas = async (req, res) => {
       estado: r.estado,
       fecha_creacion: r.fecha_creacion,
       fecha_programada: r.fecha_programada,
-      coste: r.coste
+      coste: r.coste,
+      pagado: r.pagado
     }));
 
     return res.status(200).json({ success: true, data });
