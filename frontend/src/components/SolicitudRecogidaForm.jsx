@@ -101,11 +101,11 @@ export default function SolicitudRecogidaForm({ simple }) {
   };
 
   return (
-    <div className={simple ? '' : 'min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4'}>
+    <div className={simple ? '' : 'min-h-screen bg-fondo py-12 px-4'}>
       <div className={simple ? '' : 'max-w-2xl mx-auto'}>
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
-            🗑️ TrashGo
+          <h1 className="text-4xl font-bold text-bosque-800 mb-2">
+            TrashGo
           </h1>
           <p className="text-lg text-gray-600">
             Solicita recolección de residuos a domicilio
@@ -142,7 +142,7 @@ export default function SolicitudRecogidaForm({ simple }) {
                 value={formData.direccion}
                 onChange={handleInputChange}
                 placeholder="Ej: Calle Principal 123, Apartado 4B, Madrid"
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition ${
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition ${
                   errors.direccion
                     ? 'border-red-500 bg-red-50'
                     : 'border-gray-300 bg-white'
@@ -168,7 +168,7 @@ export default function SolicitudRecogidaForm({ simple }) {
                 name="tipoResiduo"
                 value={formData.tipoResiduo}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white transition"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 bg-white transition"
               >
                 <option value="mixto">Mixto (diferentes tipos)</option>
                 <option value="orgánico">Orgánico (restos de comida, plantas)</option>
@@ -194,7 +194,7 @@ export default function SolicitudRecogidaForm({ simple }) {
                 onChange={handleInputChange}
                 placeholder="Ej: 3 bolsas grandes, incluye vidrio"
                 rows="4"
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition resize-none ${
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition resize-none ${
                   errors.descripcion
                     ? 'border-red-500 bg-red-50'
                     : 'border-gray-300 bg-white'
@@ -217,7 +217,7 @@ export default function SolicitudRecogidaForm({ simple }) {
                     value="normal"
                     checked={formData.urgencia === 'normal'}
                     onChange={handleInputChange}
-                    className="w-4 h-4 text-green-500"
+                    className="w-4 h-4 text-bosque-500"
                   />
                   <span className="ml-2 text-gray-700">Normal (24-48h)</span>
                 </label>
@@ -238,7 +238,7 @@ export default function SolicitudRecogidaForm({ simple }) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-bosque-600 text-white font-bold py-3 rounded-lg hover:bg-bosque-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

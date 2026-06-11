@@ -12,32 +12,29 @@ export default function Navbar({ user, onLogout }) {
   };
 
   return (
-    <nav className="bg-gradient-to-r from-green-600 to-blue-700 text-white px-6 py-4 flex items-center justify-between shadow-lg">
-      <Link to="/" className="text-2xl font-bold tracking-tight">
+    <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
+      <Link to="/" className="text-2xl font-bold text-bosque-700 tracking-tight">
         TrashGo
       </Link>
       <div className="flex items-center gap-4">
         {user ? (
           <>
-            <span className="text-sm font-medium">{user}</span>
+            <span className="text-sm font-medium text-gray-600">{user}</span>
             <button
               onClick={handleLogout}
-              className="bg-white text-green-700 px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition"
+              className="bg-bosque-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-bosque-700 transition"
             >
               Cerrar sesión
             </button>
           </>
         ) : (
           <>
-            <Link
-              to="/login"
-              className="text-sm font-semibold hover:underline"
-            >
+            <Link to="/login" className="text-sm font-semibold text-gray-600 hover:text-bosque-600 transition">
               Iniciar sesión
             </Link>
             <Link
               to="/register"
-              className="bg-white text-green-700 px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-gray-100 transition"
+              className="bg-bosque-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-bosque-700 transition"
             >
               Registrarse
             </Link>

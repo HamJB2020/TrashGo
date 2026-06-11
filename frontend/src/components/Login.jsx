@@ -93,10 +93,10 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-12 px-4">
+    <div className="min-h-screen bg-fondo py-12 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">
+          <h1 className="text-4xl font-bold text-bosque-800 mb-2">
             TrashGo
           </h1>
           <p className="text-lg text-gray-600">
@@ -134,7 +134,7 @@ export default function Login({ onLogin }) {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Ej: juan@correo.com"
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition ${
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition ${
                   errors.email
                     ? 'border-red-500 bg-red-50'
                     : 'border-gray-300 bg-white'
@@ -159,7 +159,7 @@ export default function Login({ onLogin }) {
                 value={formData.password}
                 onChange={handleInputChange}
                 placeholder="Ingresa tu contraseña"
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition ${
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition ${
                   errors.password
                     ? 'border-red-500 bg-red-50'
                     : 'border-gray-300 bg-white'
@@ -173,7 +173,7 @@ export default function Login({ onLogin }) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 rounded-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full bg-bosque-600 text-white font-bold py-3 rounded-lg hover:bg-bosque-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

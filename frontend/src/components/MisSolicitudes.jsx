@@ -3,8 +3,8 @@ import api from '../services/api';
 
 const estadoEstilos = {
   pendiente: 'bg-yellow-100 text-yellow-800',
-  aceptada: 'bg-blue-100 text-blue-800',
-  completada: 'bg-green-100 text-green-800',
+  aceptada: 'bg-bosque-100 text-bosque-800',
+  completada: 'bg-gray-100 text-gray-800',
   cancelada: 'bg-red-100 text-red-800'
 };
 
