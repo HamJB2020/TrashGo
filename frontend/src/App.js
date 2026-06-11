@@ -9,11 +9,13 @@ import Perfil from './components/Perfil';
 import SolicitudesPage from './components/SolicitudesPage';
 import ContactoPage from './components/ContactoPage';
 import RiderDashboard from './components/RiderDashboard';
+import RiderWelcomePage from './components/RiderWelcomePage';
 
 function App() {
   const [user, setUser] = useState(() => {
     const usuario = localStorage.getItem('usuario');
-    return usuario || null;
+    try { return usuario ? JSON.parse(usuario) : null; }
+    catch { return usuario || null; }
   });
 
   return (
@@ -26,6 +28,10 @@ function App() {
           <Route path="/contacto" element={<ContactoPage />} />
           <Route
             path="/rider"
+            element={user ? <RiderWelcomePage /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/rider/dashboard"
             element={user ? <RiderDashboard /> : <Navigate to="/login" />}
           />
           <Route

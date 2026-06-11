@@ -69,8 +69,8 @@ export default function Login({ onLogin }) {
       }
 
       localStorage.setItem('token', data.token);
-      localStorage.setItem('usuario', data.usuario.username);
-      onLogin(data.usuario.username);
+      localStorage.setItem('usuario', JSON.stringify(data.usuario));
+      onLogin(data.usuario);
       navigate('/dashboard');
 
     } catch (error) {
