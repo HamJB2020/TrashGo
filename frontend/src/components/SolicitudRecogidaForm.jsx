@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -11,18 +11,33 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 });
 
-function Marcador({ posicion, setPosicion }) {
+function Marcador({ posicion, onMove }) {
   useMapEvents({
-    click(e) { setPosicion([e.latlng.lat, e.latlng.lng]); },
+    click(e) { onMove(e.latlng.lat, e.latlng.lng); },
   });
   return posicion ? <Marker position={posicion} draggable eventHandlers={{ dragend: (e) => {
     const { lat, lng } = e.target.getLatLng();
-    setPosicion([lat, lng]);
+    onMove(lat, lng);
   }}} /> : null;
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=es`,
+      { headers: { 'User-Agent': 'TrashGo/1.0' } }
+    );
+    const data = await res.json();
+    if (data?.display_name) return data.display_name;
+    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  } catch {
+    return `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  }
 }
 
 export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   const [posicion, setPosicion] = useState(null);
+  const [buscandoDir, setBuscandoDir] = useState(false);
   const [formData, setFormData] = useState({
     direccion: localStorage.getItem('direccion_predeterminada') || '',
     tipoResiduo: 'mixto',
@@ -36,12 +51,21 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const geoOk = useRef(false);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
-      (p) => setPosicion([p.coords.latitude, p.coords.longitude]),
-      () => setPosicion([40.4168, -3.7038])
+      (p) => { geoOk.current = true; setPosicion([p.coords.latitude, p.coords.longitude]); },
+      () => {}
     );
+  }, []);
+
+  const manejarMovimientoPin = useCallback(async (lat, lng) => {
+    setPosicion([lat, lng]);
+    setBuscandoDir(true);
+    const addr = await reverseGeocode(lat, lng);
+    setFormData(prev => ({ ...prev, direccion: addr }));
+    setBuscandoDir(false);
   }, []);
 
   const calcularFechaProgramada = useCallback(() => {
@@ -65,17 +89,19 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     if (!fecha) return '';
     const diff = fecha.getTime() - Date.now();
     if (diff <= 0) return 'Ahora';
-    const h = Math.floor(diff / 3600000);
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
+    if (d > 0) return `~${d}d ${h}h ${m}m`;
     return `~${h}h ${m}m`;
   };
 
   const validarFormulario = () => {
     const nuevosErrores = {};
-    if (!formData.direccion.trim() && !posicion) {
-      nuevosErrores.direccion = 'Indica la dirección o coloca un pin en el mapa';
+    if (!formData.direccion.trim()) {
+      nuevosErrores.direccion = 'Coloca un pin en el mapa o escribe la dirección';
     }
-    const tiposValidos = ['orgánico', 'inorgánico', 'mixto', 'especial'];
+    const tiposValidos = ['orgánico', 'inorgánico', 'mixto', 'especial', 'vidrio', 'plástico', 'papel/cartón', 'metal', 'electrónico', 'madera', 'textil', 'pilas/baterías', 'aceite', 'escombros', 'poda/jardín', 'voluminoso'];
     if (!tiposValidos.includes(formData.tipoResiduo)) {
       nuevosErrores.tipoResiduo = 'Tipo de residuo inválido';
     }
@@ -103,7 +129,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
     try {
       const body = {
-        direccion: formData.direccion || `${posicion[0].toFixed(5)}, ${posicion[1].toFixed(5)}`,
+        direccion: formData.direccion,
         latitud: posicion?.[0] || null,
         longitud: posicion?.[1] || null,
         tipoResiduo: formData.tipoResiduo,
@@ -114,12 +140,13 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
       await api.post('/recogidas', body);
 
-      if (guardarDir) localStorage.setItem('direccion_predeterminada', formData.direccion);
+      if (guardarDir && formData.direccion) localStorage.setItem('direccion_predeterminada', formData.direccion);
 
       setSuccessMessage('Solicitud creada. Venimos en ' + formatearCuentaAtras(calcularFechaProgramada()));
       setFormData({ direccion: localStorage.getItem('direccion_predeterminada') || '', tipoResiduo: 'mixto', descripcion: '', urgencia: 'normal' });
       setCuando('hoy');
       setFechaCustom('');
+      setPosicion(null);
 
       if (onSuccess) onSuccess();
       setTimeout(() => setSuccessMessage(''), 4000);
@@ -157,21 +184,29 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Ubicación</label>
               <div className="h-52 w-full rounded-lg overflow-hidden border border-gray-300 z-0">
-                <MapContainer center={posicion || [40.4168, -3.7038]} zoom={14} className="h-full w-full" zoomControl={false}>
+                <MapContainer center={posicion || [19.4326, -99.1332]} zoom={posicion ? 14 : 3} className="h-full w-full" zoomControl={false}>
                   <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                  <Marcador posicion={posicion} setPosicion={setPosicion} />
+                  <Marcador posicion={posicion} onMove={manejarMovimientoPin} />
                 </MapContainer>
               </div>
               <p className="text-xs text-gray-400 mt-1">Haz clic en el mapa para colocar el pin o arrastra el pin existente.</p>
-              <input
-                type="text"
-                name="direccion"
-                value={formData.direccion}
-                onChange={handleInputChange}
-                placeholder="O escribe la dirección manualmente"
-                className={`mt-2 w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition ${errors.direccion ? 'border-red-500' : 'border-gray-300'}`}
-              />
+              <div className="mt-2 relative">
+                <input
+                  type="text"
+                  name="direccion"
+                  value={formData.direccion}
+                  onChange={handleInputChange}
+                  placeholder="Dirección obtenida del mapa o escríbela manualmente"
+                  className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition pr-8 ${errors.direccion ? 'border-red-500' : 'border-gray-300'}`}
+                />
+                {buscandoDir && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">Buscando...</span>
+                )}
+              </div>
               {errors.direccion && <p className="text-red-600 text-xs mt-1">{errors.direccion}</p>}
+              {posicion && (
+                <p className="text-xs text-gray-400 mt-1">Coordenadas: {posicion[0].toFixed(5)}, {posicion[1].toFixed(5)}</p>
+              )}
               <label className="flex items-center gap-2 mt-2 cursor-pointer">
                 <input type="checkbox" checked={guardarDir} onChange={(e) => setGuardarDir(e.target.checked)} className="w-4 h-4 text-bosque-600 rounded border-gray-300" />
                 <span className="text-sm text-gray-600">Guardar como dirección predeterminada</span>
@@ -213,7 +248,19 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
                 <option value="mixto">Mixto (varios tipos)</option>
                 <option value="orgánico">Orgánico</option>
                 <option value="inorgánico">Inorgánico</option>
-                <option value="especial">Especial</option>
+                <option value="vidrio">Vidrio</option>
+                <option value="plástico">Plástico</option>
+                <option value="papel/cartón">Papel / Cartón</option>
+                <option value="metal">Metal</option>
+                <option value="electrónico">Electrónico (RAEE)</option>
+                <option value="madera">Madera</option>
+                <option value="textil">Textil</option>
+                <option value="pilas/baterías">Pilas / Baterías</option>
+                <option value="aceite">Aceite</option>
+                <option value="escombros">Escombros</option>
+                <option value="poda/jardín">Poda / Jardín</option>
+                <option value="voluminoso">Voluminoso (muebles, etc.)</option>
+                <option value="especial">Especial (peligrosos)</option>
               </select>
               {errors.tipoResiduo && <p className="text-red-600 text-xs mt-1">{errors.tipoResiduo}</p>}
             </div>

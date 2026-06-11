@@ -170,7 +170,7 @@ export default function Login({ onLogin }) {
                 <p className="text-red-600 text-sm mt-1">{errors.password}</p>
               )}
               <div className="mt-1 text-right">
-                <span className="text-sm text-gray-400 cursor-not-allowed">¿Olvidaste tu contraseña?</span>
+                <button type="button" onClick={() => alert('Funcionalidad en desarrollo. Por ahora, contacta al soporte para restablecer tu contraseña.')} className="text-sm text-gray-400 hover:text-bosque-600 transition cursor-pointer bg-transparent border-none p-0">¿Olvidaste tu contraseña?</button>
               </div>
             </div>
 

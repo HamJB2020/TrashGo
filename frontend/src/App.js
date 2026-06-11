@@ -5,6 +5,7 @@ import Home from './components/Home';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
+import Perfil from './components/Perfil';
 
 function App() {
   const [user, setUser] = useState(() => {
@@ -19,10 +20,14 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login onLogin={(u) => setUser(u)} />} />
         <Route path="/register" element={<Register />} />
-        <Route
-          path="/dashboard"
-          element={user ? <Dashboard /> : <Navigate to="/login" />}
-        />
+          <Route
+            path="/dashboard"
+            element={user ? <Dashboard /> : <Navigate to="/login" />}
+          />
+          <Route
+            path="/perfil"
+            element={user ? <Perfil user={user} onLogout={() => setUser(null)} /> : <Navigate to="/login" />}
+          />
       </Routes>
     </BrowserRouter>
   );

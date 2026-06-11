@@ -51,6 +51,55 @@ exports.register = async (req, res) => {
   }
 };
 
+exports.getProfile = async (req, res) => {
+  try {
+    const usuario = await Usuario.findById(req.user.id).select('-password');
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: usuario._id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        telefono: usuario.telefono,
+        direccion: usuario.direccion,
+        rol: usuario.rol
+      }
+    });
+  } catch (error) {
+    console.error('Error al obtener perfil:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { nombre, telefono, direccion } = req.body;
+    const update = {};
+    if (nombre !== undefined) update.nombre = nombre.trim();
+    if (telefono !== undefined) update.telefono = telefono;
+    if (direccion !== undefined) update.direccion = direccion;
+
+    const usuario = await Usuario.findByIdAndUpdate(req.user.id, update, { new: true }).select('-password');
+    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: usuario._id,
+        nombre: usuario.nombre,
+        email: usuario.email,
+        telefono: usuario.telefono,
+        direccion: usuario.direccion,
+        rol: usuario.rol
+      }
+    });
+  } catch (error) {
+    console.error('Error al actualizar perfil:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;

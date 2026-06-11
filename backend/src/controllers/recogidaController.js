@@ -23,7 +23,7 @@ exports.crearRecogida = async (req, res) => {
       });
     }
 
-    const tiposValidos = ['orgánico', 'inorgánico', 'mixto', 'especial'];
+    const tiposValidos = ['orgánico', 'inorgánico', 'mixto', 'especial', 'vidrio', 'plástico', 'papel/cartón', 'metal', 'electrónico', 'madera', 'textil', 'pilas/baterías', 'aceite', 'escombros', 'poda/jardín', 'voluminoso'];
     if (!tiposValidos.includes(tipoResiduo.toLowerCase())) {
       return res.status(400).json({
         error: `Tipo de residuo inválido. Debe ser uno de: ${tiposValidos.join(', ')}`,

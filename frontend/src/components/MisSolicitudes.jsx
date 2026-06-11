@@ -29,10 +29,12 @@ function CuentaAtras({ fecha }) {
     function tick() {
       const diff = new Date(fecha).getTime() - Date.now();
       if (diff <= 0) { setTexto('Ya debería estar en camino!'); return; }
-      const h = Math.floor(diff / 3600000);
+      const d = Math.floor(diff / 86400000);
+      const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      setTexto(`${h}h ${m}m ${s}s`);
+      if (d > 0) setTexto(`${d}d ${h}h ${m}m ${s}s`);
+      else setTexto(`${h}h ${m}m ${s}s`);
     }
     tick();
     const id = setInterval(tick, 1000);
