@@ -107,7 +107,7 @@ export default function Perfil({ user, onLogout }) {
                 <button type="submit" disabled={saving} className="flex-1 bg-bosque-600 text-white font-semibold py-2.5 rounded-lg hover:bg-bosque-700 transition disabled:opacity-50 text-sm">
                   {saving ? 'Guardando...' : 'Guardar cambios'}
                 </button>
-                <button type="button" onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('usuario'); onLogout(); navigate('/'); }} className="px-4 py-2.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
+                <button type="button" onClick={() => { if (!window.confirm('¿Estás seguro de que quieres cerrar sesión?')) return; localStorage.removeItem('token'); localStorage.removeItem('usuario'); onLogout(); navigate('/'); }} className="px-4 py-2.5 text-sm text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                   Cerrar sesión
                 </button>
               </div>

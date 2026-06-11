@@ -276,7 +276,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
       await api.post('/recogidas', body);
 
-      showToast(setToasts, 'Solicitud creada. Venimos en ' + formatearCuentaAtras(calcularFechaProgramada()), 'success');
+      showToast(setToasts, 'Solicitud creada. Venimos en ' + formatearCuentaAtras(calcularFechaProgramada()) + '. No olvides pagar para confirmar.', 'success');
       setFormData({ calle: '', numero: '', ciudad: '', pais: '', piso: '', peso: 1, tipoResiduo: [], descripcion: '', urgencia: 'normal' });
       setCuando('hoy');
       setFechaCustom('');

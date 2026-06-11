@@ -156,8 +156,6 @@ export default function MisSolicitudes({ refreshKey }) {
                 <CuentaAtras fecha={sol.fecha_programada} />
               </div>
             )}
-            {sol.estado === 'cancelada' && <p className="text-xs font-bold text-white bg-red-600 rounded-md px-2 py-1 mt-1 inline-block">✕ Cancelada</p>}
-            {sol.estado === 'completada' && <p className="text-xs font-bold text-white bg-green-600 rounded-md px-2 py-1 mt-1 inline-block">✓ Completada</p>}
             {sol.fecha_creacion && (
               <p className="text-xs text-gray-400 mt-1">
                 Solicitado {new Date(sol.fecha_creacion).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}

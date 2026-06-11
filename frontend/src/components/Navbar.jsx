@@ -5,6 +5,7 @@ export default function Navbar({ user, onLogout }) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    if (!window.confirm('¿Estás seguro de que quieres cerrar sesión?')) return;
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
     onLogout();
