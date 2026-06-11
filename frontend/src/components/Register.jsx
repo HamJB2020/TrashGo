@@ -104,7 +104,7 @@ export default function Register() {
     else if (!/\S+@\S+\.\S+/.test(formData.email)) nuevosErrores.email = 'Formato de correo inválido';
     if (!formData.password) nuevosErrores.password = 'La contraseña es obligatoria';
     else if (formData.password.length < 6) nuevosErrores.password = 'La contraseña debe tener al menos 6 caracteres';
-    if (!formData.direccion.trim()) nuevosErrores.direccion = 'Coloca un pin en el mapa para indicar tu dirección';
+    if (!posicion) nuevosErrores.direccion = 'Coloca un pin en el mapa o escribe una dirección válida';
     return nuevosErrores;
   };
 

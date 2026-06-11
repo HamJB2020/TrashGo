@@ -144,8 +144,8 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
 
   const validarFormulario = () => {
     const nuevosErrores = {};
-    if (!posicion && !formData.direccion.trim()) {
-      nuevosErrores.direccion = 'Coloca un pin en el mapa para indicar la ubicación';
+    if (!posicion) {
+      nuevosErrores.direccion = 'Coloca un pin en el mapa o escribe una dirección válida';
     }
     if (cuando === 'custom' && !fechaCustom) {
       nuevosErrores.fechaCustom = 'Selecciona una fecha y hora';
