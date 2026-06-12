@@ -35,7 +35,7 @@ export default function Login({ onLogin }) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('usuario', JSON.stringify(data.usuario));
       onLogin(data.usuario);
-      navigate(data.usuario.rol === 'rider' ? '/rider' : '/dashboard');
+      navigate('/');
     } catch (error) {
       const msg = error.response?.data?.error || error.response?.data?.message || 'Credenciales inválidas';
       setErrorMessage(msg);

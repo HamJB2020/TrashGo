@@ -16,7 +16,7 @@ export default function Navbar({ user, onLogout }) {
             </Link>
             {user?.rol === 'rider' && (
               <Link to="/rider" className="bg-bosque-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-bosque-700 transition">
-                🚛 Rider
+                Rider
               </Link>
             )}
           </>
