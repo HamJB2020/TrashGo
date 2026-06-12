@@ -254,6 +254,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     const validationErrors = validarFormulario();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      showToast(setToasts, 'Corrige los campos marcados en rojo antes de continuar', 'error');
       return;
     }
 

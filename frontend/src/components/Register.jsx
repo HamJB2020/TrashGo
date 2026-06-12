@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import ToastContainer, { showToast } from './Toast';
 
 const PAISES = [
   { value: 'España', coords: [40.4168, -3.7038] },
@@ -43,6 +44,7 @@ export default function Register() {
     esRider: false,
   });
   const [errors, setErrors] = useState({});
+  const [toasts, setToasts] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -72,6 +74,7 @@ export default function Register() {
     const validationErrors = validarFormulario();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      showToast(setToasts, 'Corrige los campos marcados en rojo antes de continuar', 'error');
       return;
     }
 
@@ -81,6 +84,7 @@ export default function Register() {
       const payload = { ...formData, rol: formData.esRider ? 'rider' : 'usuario' };
       delete payload.esRider;
       await api.post('/auth/register', payload);
+      showToast(setToasts, 'Registrado correctamente. Redirigiendo...', 'success');
       setSuccessMessage('Registrado correctamente. Redirigiendo al inicio de sesión...');
       setTimeout(() => navigate('/login'), 3000);
     } catch (error) {
@@ -103,6 +107,7 @@ export default function Register() {
         </div>
 
         <div className="bg-white rounded-lg shadow-xl p-8">
+          <ToastContainer toasts={toasts} />
 
           {successMessage && (
             <div className="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg animate-pulse">
