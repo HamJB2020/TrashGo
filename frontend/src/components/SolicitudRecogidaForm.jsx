@@ -120,6 +120,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
   const [isLoading, setIsLoading] = useState(false);
   const [toasts, setToasts] = useState([]);
   const enviando = useRef(false);
+  const direccionVerificada = useRef(false);
 
   useEffect(() => {
     const centrarEnPais = async () => {
@@ -158,6 +159,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     if (addr.valido) {
       setFormData(prev => ({ ...prev, calle: addr.calle, ciudad: addr.ciudad, pais: addr.pais }));
       setErrors(prev => ({ ...prev, direccion: '' }));
+      direccionVerificada.current = true;
     } else {
       setFormData(prev => ({ ...prev, calle: '', ciudad: '', pais: '' }));
       setPosicion(null);
@@ -215,21 +217,27 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
       setPosicion([result.lat, result.lng]);
       setFormData(prev => ({ ...prev, calle: result.calle, ciudad: result.ciudad || prev.ciudad, pais: result.pais || prev.pais }));
       setErrors(prev => ({ ...prev, direccion: '' }));
+      direccionVerificada.current = true;
     } else {
+      setPosicion(null);
       setErrors(prev => ({ ...prev, direccion: 'Dirección no encontrada. Coloca un pin en el mapa.' }));
     }
   }, [formData.calle, formData.numero, formData.ciudad]);
 
   const validarFormulario = () => {
     const nuevosErrores = {};
-    if (!posicion) {
-      nuevosErrores.direccion = 'Coloca un pin en el mapa o escribe una dirección válida';
+    if (!posicion || !direccionVerificada.current) {
+      nuevosErrores.direccion = 'Selecciona una dirección válida en el mapa o búscala con "Buscar"';
     }
     if (!formData.calle.trim()) nuevosErrores.calle = 'La calle es obligatoria';
     if (!formData.peso || formData.peso < 1) nuevosErrores.peso = 'El peso mínimo es 1 kg';
     else if (formData.peso > 50) nuevosErrores.peso = 'No recogemos más de 50 kg';
-    if (cuando === 'custom' && !fechaCustom) {
-      nuevosErrores.fechaCustom = 'Selecciona una fecha y hora';
+    if (cuando === 'custom') {
+      if (!fechaCustom) {
+        nuevosErrores.fechaCustom = 'Selecciona una fecha';
+      } else if (new Date(fechaCustom) <= new Date(new Date().toDateString())) {
+        nuevosErrores.fechaCustom = 'La fecha debe ser posterior a hoy';
+      }
     }
     const tiposValidos = ['orgánico', 'inorgánico', 'mixto', 'especial', 'vidrio', 'plástico', 'papel/cartón', 'metal', 'electrónico', 'madera', 'textil', 'pilas/baterías', 'aceite', 'escombros', 'poda/jardín', 'voluminoso'];
     if (!Array.isArray(formData.tipoResiduo) || formData.tipoResiduo.length === 0) {
@@ -244,6 +252,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+    if (['calle', 'numero', 'ciudad'].includes(name)) direccionVerificada.current = false;
   };
 
   const handleSubmit = async (e) => {
@@ -378,6 +387,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
               </div>
               {cuando === 'custom' && (
                 <input type="date" value={fechaCustom} onChange={(e) => setFechaCustom(e.target.value)}
+                  min={new Date(new Date().getTime() + 86400000).toISOString().split('T')[0]}
                   className="mt-2 w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500" />
               )}
               {errors.fechaCustom && <p className="text-red-600 text-xs mt-1">{errors.fechaCustom}</p>}

@@ -1,17 +1,7 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import ConfirmModal from './ConfirmModal';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 export default function Navbar({ user, onLogout }) {
-  const navigate = useNavigate();
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
-    onLogout();
-    navigate('/');
-  };
 
   return (
     <nav className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
@@ -29,16 +19,10 @@ export default function Navbar({ user, onLogout }) {
                 🚛 Rider
               </Link>
             )}
-            <button
-              onClick={() => setShowConfirm(true)}
-              className="bg-bosque-600 text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-bosque-700 transition"
-            >
-              Cerrar sesión
-            </button>
           </>
         ) : (
           <>
-            <Link to="/login" className="text-sm font-semibold text-gray-600 hover:text-bosque-600 transition">
+            <Link to="/login" className="bg-bosque-600 text-white px-3 py-1.5 rounded-lg text-sm font-semibold hover:bg-bosque-700 transition">
               Iniciar sesión
             </Link>
             <Link
@@ -53,13 +37,6 @@ export default function Navbar({ user, onLogout }) {
           Contacto
         </Link>
       </div>
-      {showConfirm && (
-        <ConfirmModal
-          mensaje="¿Estás seguro de que quieres cerrar sesión?"
-          onConfirm={() => { setShowConfirm(false); handleLogout(); }}
-          onCancel={() => setShowConfirm(false)}
-        />
-      )}
     </nav>
   );
 }
