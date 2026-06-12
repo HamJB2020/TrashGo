@@ -9,18 +9,13 @@ exports.crearRecogida = async (req, res) => {
       try {
         const decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
         req.user = decoded;
-      } catch (e) {
-        // token inválido o expirado, req.user queda undefined
-      }
+      } catch (e) {}
     }
 
     let { direccion, tipoResiduo, descripcion, urgencia } = req.body;
 
     if (!direccion || !tipoResiduo) {
-      return res.status(400).json({
-        error: 'Campos faltantes: direccion y tipoResiduo son obligatorios',
-        code: 'VALIDATION_ERROR'
-      });
+      return res.status(400).json({ error: 'Dirección y tipo de residuo son obligatorios' });
     }
 
     const tiposValidos = ['orgánico', 'inorgánico', 'mixto', 'especial', 'vidrio', 'plástico', 'papel/cartón', 'metal', 'electrónico', 'madera', 'textil', 'pilas/baterías', 'aceite', 'escombros', 'poda/jardín', 'voluminoso'];
@@ -32,17 +27,11 @@ exports.crearRecogida = async (req, res) => {
     const tiposNormalizados = tipoResiduo.map(t => t.toLowerCase());
     const invalidos = tiposNormalizados.filter(t => !tiposValidos.includes(t));
     if (invalidos.length > 0) {
-      return res.status(400).json({
-        error: `Tipo(s) de residuo inválido(s): ${invalidos.join(', ')}. Válidos: ${tiposValidos.join(', ')}`,
-        code: 'INVALID_RESIDUE_TYPE'
-      });
+      return res.status(400).json({ error: `Tipo(s) inválido(s): ${invalidos.join(', ')}` });
     }
 
     if (direccion.trim().length < 10) {
-      return res.status(400).json({
-        error: 'La dirección debe tener al menos 10 caracteres',
-        code: 'INVALID_ADDRESS'
-      });
+      return res.status(400).json({ error: 'La dirección es muy corta' });
     }
 
     const recogida = await Recogida.create({
@@ -73,16 +62,12 @@ exports.crearRecogida = async (req, res) => {
         recogidaId: recogida._id,
         estado: recogida.estado,
         createdAt: recogida.fecha_creacion
-      },
-      mensaje: 'Solicitud de recogida creada exitosamente'
+      }
     });
 
   } catch (error) {
     console.error('Error al crear recogida:', error);
-    return res.status(500).json({
-      error: 'Error interno del servidor al crear recogida',
-      code: 'SERVER_ERROR'
-    });
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -94,12 +79,12 @@ exports.pagarRecogida = async (req, res) => {
       { new: true }
     );
     if (!recogida) {
-      return res.status(404).json({ error: 'Recogida no encontrada o ya pagada', code: 'NOT_FOUND' });
+      return res.status(404).json({ error: 'Recogida no encontrada o ya pagada' });
     }
     return res.status(200).json({ success: true, data: { id: recogida._id, pagado: true } });
   } catch (error) {
     console.error('Error al procesar pago:', error);
-    return res.status(500).json({ error: 'Error interno del servidor', code: 'SERVER_ERROR' });
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -111,23 +96,14 @@ exports.obtenerRecogida = async (req, res) => {
     });
 
     if (!recogida) {
-      return res.status(404).json({
-        error: 'Recogida no encontrada o no tienes permisos',
-        code: 'NOT_FOUND'
-      });
+      return res.status(404).json({ error: 'Recogida no encontrada' });
     }
 
-    return res.status(200).json({
-      success: true,
-      data: recogida
-    });
+    return res.status(200).json({ success: true, data: recogida });
 
   } catch (error) {
     console.error('Error al obtener recogida:', error);
-    return res.status(500).json({
-      error: 'Error interno del servidor',
-      code: 'SERVER_ERROR'
-    });
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -178,11 +154,8 @@ exports.listadoDisponibles = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error al listar recogidas disponibles:', error);
-    return res.status(500).json({
-      error: 'Error interno del servidor',
-      code: 'SERVER_ERROR'
-    });
+    console.error('Error al listar recogidas:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -212,45 +185,30 @@ exports.obtenerMisRecogidas = async (req, res) => {
 
   } catch (error) {
     console.error('Error al obtener mis recogidas:', error);
-    return res.status(500).json({ error: 'Error interno del servidor', code: 'SERVER_ERROR' });
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
 exports.aceptarRecogida = async (req, res) => {
   try {
     const recogida = await Recogida.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        rider_id: null,
-        estado: 'pendiente'
-      },
-      {
-        rider_id: req.user.id,
-        estado: 'aceptada',
-        fecha_aceptacion: new Date()
-      },
+      { _id: req.params.id, rider_id: null, estado: 'pendiente' },
+      { rider_id: req.user.id, estado: 'aceptada', fecha_aceptacion: new Date() },
       { new: true }
     );
 
     if (!recogida) {
-      return res.status(409).json({
-        error: 'Recogida no disponible (ya fue aceptada)',
-        code: 'NOT_AVAILABLE'
-      });
+      return res.status(409).json({ error: 'Recogida no disponible (ya fue aceptada)' });
     }
 
     return res.status(200).json({
       success: true,
-      data: { id: recogida._id, estado: recogida.estado, rider_id: recogida.rider_id },
-      mensaje: 'Solicitud aceptada'
+      data: { id: recogida._id, estado: recogida.estado, rider_id: recogida.rider_id }
     });
 
   } catch (error) {
     console.error('Error al aceptar recogida:', error);
-    return res.status(500).json({
-      error: 'Error al aceptar recogida',
-      code: 'SERVER_ERROR'
-    });
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -286,7 +244,7 @@ exports.misAceptadas = async (req, res) => {
 
   } catch (error) {
     console.error('Error al obtener mis aceptadas:', error);
-    return res.status(500).json({ error: 'Error interno del servidor', code: 'SERVER_ERROR' });
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -299,24 +257,17 @@ exports.completarRecogida = async (req, res) => {
     );
 
     if (!recogida) {
-      return res.status(404).json({
-        error: 'Recogida no encontrada o no puedes completarla',
-        code: 'NOT_FOUND'
-      });
+      return res.status(404).json({ error: 'Recogida no encontrada o no puedes completarla' });
     }
 
     return res.status(200).json({
       success: true,
-      data: { id: recogida._id, estado: recogida.estado },
-      mensaje: 'Recogida completada'
+      data: { id: recogida._id, estado: recogida.estado }
     });
 
   } catch (error) {
     console.error('Error al completar recogida:', error);
-    return res.status(500).json({
-      error: 'Error interno del servidor',
-      code: 'SERVER_ERROR'
-    });
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
@@ -328,11 +279,11 @@ exports.cancelarRecogida = async (req, res) => {
       { new: true }
     );
     if (!recogida) {
-      return res.status(404).json({ error: 'No se puede cancelar. La solicitud no existe o ya no está pendiente.', code: 'NOT_FOUND' });
+      return res.status(404).json({ error: 'No se puede cancelar. La solicitud no existe o ya no está pendiente.' });
     }
-    return res.status(200).json({ success: true, data: { id: recogida._id, estado: recogida.estado }, mensaje: 'Solicitud cancelada' });
+    return res.status(200).json({ success: true, data: { id: recogida._id, estado: recogida.estado } });
   } catch (error) {
     console.error('Error al cancelar recogida:', error);
-    return res.status(500).json({ error: 'Error interno del servidor', code: 'SERVER_ERROR' });
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

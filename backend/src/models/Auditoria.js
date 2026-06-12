@@ -5,7 +5,6 @@ const auditoriaSchema = new mongoose.Schema({
   accion: { type: String, required: true },
   tabla_afectada: { type: String, required: true },
   registro_id: { type: mongoose.Schema.Types.ObjectId },
-  fecha: { type: Date, default: Date.now }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Auditoria', auditoriaSchema);
