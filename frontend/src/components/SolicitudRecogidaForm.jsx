@@ -277,6 +277,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
         latitud: posicion?.[0] || null,
         longitud: posicion?.[1] || null,
         tipoResiduo: formData.tipoResiduo,
+        pais: formData.pais,
         descripcion: formData.descripcion || null,
         urgencia: formData.urgencia,
         fechaProgramada: calcularFechaProgramada(),

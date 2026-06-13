@@ -24,11 +24,22 @@ export default function RiderDashboard() {
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
   const [confirmAction, setConfirmAction] = useState(null);
+  const [miPais, setMiPais] = useState('');
+  const [verOtros, setVerOtros] = useState(false);
+  const [otrasCount, setOtrasCount] = useState(0);
+
+  useEffect(() => {
+    api.get('/auth/perfil').then(r => {
+      if (r.data.data?.pais) setMiPais(r.data.data.pais);
+    }).catch(() => {});
+  }, []);
 
   const fetchDisponibles = async () => {
     try {
-      const res = await api.get('/recogidas/disponibles');
+      const params = verOtros ? {} : { pais: miPais };
+      const res = await api.get('/recogidas/disponibles', { params });
       setDisponibles(res.data.data || []);
+      setOtrasCount(res.data.otrasCount || 0);
     } catch { setDisponibles([]); }
   };
 
@@ -41,6 +52,7 @@ export default function RiderDashboard() {
   };
 
   useEffect(() => {
+    if (!miPais && !verOtros) return;
     const load = async () => {
       setLoading(true);
       await Promise.all([fetchDisponibles(), fetchAceptadas()]);
@@ -49,11 +61,11 @@ export default function RiderDashboard() {
     load();
     const id = setInterval(load, 15000);
     return () => clearInterval(id);
-  }, []);
+  }, [miPais, verOtros]);
 
   useEffect(() => {
     if (tab === 'aceptadas') fetchAceptadas();
-    else fetchDisponibles();
+    else if (miPais) fetchDisponibles();
   }, [tab]);
 
   const handleAceptar = async (id) => {
@@ -87,7 +99,7 @@ export default function RiderDashboard() {
     return map[estado] || 'bg-gray-100 text-gray-800';
   };
 
-  if (loading) return (
+  if (loading && !miPais) return (
     <div className="min-h-screen bg-fondo flex items-center justify-center">
       <p className="text-gray-400">Cargando panel rider...</p>
     </div>
@@ -97,9 +109,14 @@ export default function RiderDashboard() {
     <div className="min-h-screen bg-fondo py-8 px-4">
       <ToastContainer toasts={toasts} />
       <div className="max-w-6xl mx-auto">
-        <Link to="/dashboard" className="text-sm text-gray-400 hover:text-bosque-600 transition inline-block mb-4">&larr; Volver al panel</Link>
+        <Link to="/" className="text-sm text-gray-400 hover:text-bosque-600 transition inline-block mb-4">&larr; Volver</Link>
         <h1 className="text-3xl font-bold text-bosque-800 mb-2">Panel Rider</h1>
-        <div className="flex items-center gap-4 mb-6">
+
+        {miPais && (
+          <p className="text-sm text-gray-500 mb-1">País: <span className="font-semibold text-bosque-700">{miPais}</span></p>
+        )}
+
+        <div className="flex items-center gap-4 mb-1">
           <p className="text-sm text-gray-500">Ganancia total (80%): <span className="font-bold text-bosque-700 text-lg">{gananciaTotal.toFixed(2)} €</span></p>
         </div>
 
@@ -112,6 +129,16 @@ export default function RiderDashboard() {
             </button>
           ))}
         </div>
+
+        {tab === 'disponibles' && miPais && (
+          <div className="mb-4">
+            <button onClick={() => setVerOtros(!verOtros)}
+              className="text-sm text-bosque-600 hover:text-bosque-700 font-semibold bg-white border border-bosque-300 px-4 py-2 rounded-lg transition"
+            >
+              {verOtros ? 'Mostrar solo mi país' : `Ver solicitudes de otros países (${otrasCount})`}
+            </button>
+          </div>
+        )}
 
         {tab === 'disponibles' && (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -127,12 +154,13 @@ export default function RiderDashboard() {
                 <p className="text-sm font-semibold text-gray-700">{Array.isArray(sol.tipo_residuo) ? sol.tipo_residuo.join(', ') : sol.tipo_residuo}</p>
                 {sol.peso && <p className="text-xs text-gray-400">{sol.peso} kg</p>}
                 <p className="text-xs text-gray-500 mt-1">📍 {sol.direccion}</p>
+                {sol.pais && <p className="text-xs text-gray-400">🌍 {sol.pais}</p>}
                 {sol.usuario_nombre && <p className="text-xs text-gray-400 mt-1">Cliente: {sol.usuario_nombre}</p>}
                 {sol.usuario_telefono && <p className="text-xs text-gray-400">📞 {sol.usuario_telefono}</p>}
                 {sol.coste != null && <p className="text-xs font-semibold text-bosque-700 mt-1">{sol.coste.toFixed(2)} € {sol.pagado ? '✓ Pagado' : '(pendiente)'}</p>}
-<button onClick={() => setConfirmAction({ type: 'aceptar', id: sol.id })}
-                   className="mt-3 w-full bg-green-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-green-700 transition">
-                   Aceptar solicitud
+                <button onClick={() => setConfirmAction({ type: 'aceptar', id: sol.id })}
+                  className="mt-3 w-full bg-green-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-green-700 transition">
+                  Aceptar solicitud
                 </button>
               </div>
             ))}

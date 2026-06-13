@@ -40,6 +40,7 @@ exports.crearRecogida = async (req, res) => {
       latitud: req.body.latitud || null,
       longitud: req.body.longitud || null,
       tipo_residuo: tiposNormalizados,
+      pais: req.body.pais || null,
       descripcion: descripcion || null,
       urgencia: urgencia || 'normal',
       fecha_programada: req.body.fechaProgramada || null,
@@ -109,7 +110,7 @@ exports.obtenerRecogida = async (req, res) => {
 
 exports.listadoDisponibles = async (req, res) => {
   try {
-    const { estado = 'pendiente', tipoResiduo, pagina = 1, limite = 20 } = req.query;
+    const { estado = 'pendiente', tipoResiduo, pais, pagina = 1, limite = 20 } = req.query;
     const skip = (parseInt(pagina) - 1) * parseInt(limite);
 
     const filtro = { estado, rider_id: null };
@@ -118,14 +119,21 @@ exports.listadoDisponibles = async (req, res) => {
       filtro.tipo_residuo = { $in: [tipoResiduo.toLowerCase()] };
     }
 
-    const [recogidas, total] = await Promise.all([
+    let filtroExtra = {};
+    if (pais) {
+      filtro.pais = pais;
+      filtroExtra = { estado, rider_id: null, pais: { $ne: pais } };
+    }
+
+    const [recogidas, total, otrasCount] = await Promise.all([
       Recogida.find(filtro)
         .populate('usuario_id', 'nombre telefono')
         .sort({ urgencia: -1, fecha_creacion: 1 })
         .skip(skip)
         .limit(parseInt(limite))
         .lean(),
-      Recogida.countDocuments(filtro)
+      Recogida.countDocuments(filtro),
+      pais ? Recogida.countDocuments(filtroExtra) : Promise.resolve(0)
     ]);
 
     const data = recogidas.map(r => ({
@@ -138,6 +146,7 @@ exports.listadoDisponibles = async (req, res) => {
       coste: r.coste,
       pagado: r.pagado,
       peso: r.peso,
+      pais: r.pais,
       usuario_nombre: r.usuario_id?.nombre,
       usuario_telefono: r.usuario_id?.telefono
     }));
@@ -145,6 +154,7 @@ exports.listadoDisponibles = async (req, res) => {
     return res.status(200).json({
       success: true,
       data,
+      otrasCount,
       paginacion: {
         pagina: parseInt(pagina),
         limite: parseInt(limite),
