@@ -209,6 +209,7 @@ export default function RiderDashboard() {
         <ConfirmModal
           mensaje={confirmAction.type === 'aceptar' ? '¿Aceptas esta solicitud de recogida?' : '¿Marcar esta recogida como completada?'}
           confirmText={confirmAction.type === 'aceptar' ? 'Sí, aceptar' : 'Sí, completada'}
+          confirmBg="bg-green-600 hover:bg-green-700"
           onConfirm={() => {
             if (confirmAction.type === 'aceptar') handleAceptar(confirmAction.id);
             else handleCompletar(confirmAction.id);

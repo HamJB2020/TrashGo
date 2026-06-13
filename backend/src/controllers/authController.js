@@ -4,7 +4,7 @@ const Usuario = require('../models/Usuario');
 
 exports.register = async (req, res) => {
   try {
-    const { username, email, password, telefono, pais, rol } = req.body;
+    const { username, email, password, telefono, pais, calle, rol } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
@@ -24,6 +24,7 @@ exports.register = async (req, res) => {
       password: passwordHash,
       telefono,
       pais,
+      calle,
       rol: rol === 'rider' ? 'rider' : 'usuario'
     });
 
@@ -50,6 +51,7 @@ exports.getProfile = async (req, res) => {
         email: usuario.email,
         telefono: usuario.telefono,
         pais: usuario.pais,
+        calle: usuario.calle,
         rol: usuario.rol
       }
     });
@@ -61,11 +63,12 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
   try {
-    const { nombre, telefono, pais } = req.body;
+    const { nombre, telefono, pais, calle } = req.body;
     const update = {};
     if (nombre !== undefined) update.nombre = nombre.trim();
     if (telefono !== undefined) update.telefono = telefono;
     if (pais !== undefined) update.pais = pais;
+    if (calle !== undefined) update.calle = calle;
 
     const usuario = await Usuario.findByIdAndUpdate(req.user.id, update, { new: true }).select('-password');
     if (!usuario) return res.status(401).json({ error: 'Sesión expirada. Inicia sesión de nuevo.' });
@@ -78,11 +81,12 @@ exports.updateProfile = async (req, res) => {
         email: usuario.email,
         telefono: usuario.telefono,
         pais: usuario.pais,
+        calle: usuario.calle,
         rol: usuario.rol
       }
     });
   } catch (error) {
-    console.error('Error al actualizar perfil:', error);
+    console.error('Error al guardar perfil:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

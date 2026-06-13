@@ -11,7 +11,7 @@ export default function Perfil({ user, onLogout }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
-  const [form, setForm] = useState({ nombre: '', telefono: '', pais: '' });
+  const [form, setForm] = useState({ nombre: '', telefono: '', pais: '', calle: '' });
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -19,7 +19,7 @@ export default function Perfil({ user, onLogout }) {
         const res = await api.get('/auth/perfil');
         const data = res.data.data;
         setProfile(data);
-        setForm({ nombre: data.nombre || '', telefono: data.telefono || '', pais: data.pais || '' });
+        setForm({ nombre: data.nombre || '', telefono: data.telefono || '', pais: data.pais || '', calle: data.calle || '' });
       } catch (err) {
         if (err.response?.status === 401) { onLogout(); navigate('/login'); }
         else setError('Error al cargar perfil');
@@ -102,6 +102,12 @@ export default function Perfil({ user, onLogout }) {
                     <option key={p} value={p}>{p}</option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label htmlFor="calle" className="block text-sm font-semibold text-gray-700 mb-1">Dirección</label>
+                <input id="calle" name="calle" value={form.calle} onChange={handleChange} placeholder="Ej: Av. Siempre Viva 123" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500" />
+                <p className="text-xs text-gray-400 mt-1">Esta dirección aparecerá como "Mi casa" en el dashboard</p>
               </div>
 
               <div className="flex gap-3 pt-2">

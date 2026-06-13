@@ -77,9 +77,6 @@ export default function Login({ onLogin }) {
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500 transition ${errors.password ? 'border-red-500 bg-red-50' : 'border-gray-300'}`}
               />
               {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
-              <div className="mt-1 text-right">
-                <button type="button" onClick={() => alert('Contacta al soporte para restablecer tu contraseña.')} className="text-sm text-gray-400 hover:text-bosque-600 transition cursor-pointer bg-transparent border-none p-0">¿Olvidaste tu contraseña?</button>
-              </div>
             </div>
 
             <button type="submit" disabled={isLoading}

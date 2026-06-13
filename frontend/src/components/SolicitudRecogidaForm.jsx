@@ -95,7 +95,7 @@ function calcularCoste(tipos, cuando, urgencia, peso) {
   return totalKg * (MULTIPLICADOR_CUANDO[cuando] || 1) * (MULTIPLICADOR_URGENCIA[urgencia] || 1);
 }
 
-export default function SolicitudRecogidaForm({ simple, onSuccess }) {
+export default function SolicitudRecogidaForm({ simple, onSuccess, initialCalle }) {
   const [posicion, setPosicion] = useState(null);
   const [formData, setFormData] = useState({
     calle: '',
@@ -152,6 +152,12 @@ export default function SolicitudRecogidaForm({ simple, onSuccess }) {
     };
     centrarEnPais();
   }, []);
+
+  useEffect(() => {
+    if (initialCalle) {
+      setFormData(prev => ({ ...prev, calle: initialCalle }));
+    }
+  }, [initialCalle]);
 
   const manejarMovimientoPin = useCallback(async (lat, lng) => {
     setPosicion([lat, lng]);

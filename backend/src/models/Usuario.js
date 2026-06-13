@@ -7,6 +7,7 @@ const usuarioSchema = new mongoose.Schema({
   telefono: { type: String, trim: true },
   direccion: { type: String, trim: true },
   pais: { type: String, trim: true },
+  calle: { type: String, trim: true },
   rol: { type: String, enum: ['usuario', 'rider'], default: 'usuario' }
 }, { timestamps: true });
 
