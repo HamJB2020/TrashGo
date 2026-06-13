@@ -41,7 +41,7 @@ exports.register = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.user.id).select('-password');
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!usuario) return res.status(401).json({ error: 'Sesión expirada. Inicia sesión de nuevo.' });
     return res.status(200).json({
       success: true,
       data: {
@@ -68,7 +68,7 @@ exports.updateProfile = async (req, res) => {
     if (pais !== undefined) update.pais = pais;
 
     const usuario = await Usuario.findByIdAndUpdate(req.user.id, update, { new: true }).select('-password');
-    if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!usuario) return res.status(401).json({ error: 'Sesión expirada. Inicia sesión de nuevo.' });
 
     return res.status(200).json({
       success: true,

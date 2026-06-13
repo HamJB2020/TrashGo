@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ConfirmModal({ mensaje, onConfirm, onCancel, confirmText = 'Sí', cancelText = 'No' }) {
+export default function ConfirmModal({ mensaje, onConfirm, onCancel, confirmText = 'Sí', cancelText = 'No', confirmBg = 'bg-red-600 hover:bg-red-700' }) {
   return (
     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-2xl p-6 mx-4 max-w-sm w-full animate-slide-in">
@@ -12,7 +12,7 @@ export default function ConfirmModal({ mensaje, onConfirm, onCancel, confirmText
             {cancelText}
           </button>
           <button onClick={onConfirm}
-            className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-red-600 rounded-xl hover:bg-red-700 transition"
+            className={`flex-1 px-4 py-2.5 text-sm font-semibold text-white rounded-xl transition ${confirmBg}`}
           >
             {confirmText}
           </button>

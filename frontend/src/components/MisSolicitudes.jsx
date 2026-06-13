@@ -200,6 +200,7 @@ export default function MisSolicitudes({ refreshKey }) {
         <ConfirmModal
           mensaje={`¿Confirmas el pago de ${confirmPagar.coste.toFixed(2)} € por esta solicitud?`}
           confirmText="Sí, pagar"
+          confirmBg="bg-green-600 hover:bg-green-700"
           onConfirm={() => { setPagarSolicitud(confirmPagar); setConfirmPagar(null); }}
           onCancel={() => setConfirmPagar(null)}
         />
