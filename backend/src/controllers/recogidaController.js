@@ -120,17 +120,25 @@ exports.reagendar = async (req, res) => {
       return res.status(400).json({ error: 'fechaProgramada es requerida' });
     }
 
-    const recogida = await Recogida.findOneAndUpdate(
-      { _id: req.params.id, usuario_id: req.user.id, estado: 'pendiente', pagado: false },
-      { fecha_programada: fechaProgramada },
-      { new: true }
+    const recogida = await Recogida.findOne(
+      { _id: req.params.id, usuario_id: req.user.id, estado: 'pendiente', pagado: false }
     );
 
     if (!recogida) {
       return res.status(404).json({ error: 'Recogida no encontrada o no se puede reagendar' });
     }
 
-    return res.status(200).json({ success: true, data: { id: recogida._id, fecha_programada: recogida.fecha_programada } });
+    const costeAnterior = recogida.coste;
+    const nuevoCoste = Math.round(costeAnterior * 1.3 * 100) / 100;
+
+    recogida.fecha_programada = fechaProgramada;
+    recogida.coste = nuevoCoste;
+    await recogida.save();
+
+    return res.status(200).json({
+      success: true,
+      data: { id: recogida._id, fecha_programada: recogida.fecha_programada, coste: nuevoCoste, costeAnterior }
+    });
   } catch (error) {
     console.error('Error al reagendar recogida:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
@@ -371,6 +379,31 @@ exports.cancelarRecogida = async (req, res) => {
     return res.status(200).json({ success: true, data: { id: recogida._id, estado: recogida.estado } });
   } catch (error) {
     console.error('Error al cancelar recogida:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+exports.valorarRecogida = async (req, res) => {
+  try {
+    const val = Number(req.body.valoracion);
+    if (val < 1 || val > 5) {
+      return res.status(400).json({ error: 'La valoración debe estar entre 1 y 5' });
+    }
+
+    const recogida = await Recogida.findOneAndUpdate(
+      { _id: req.params.id, usuario_id: req.user.id, estado: 'completada', valoracion: null },
+      { valoracion: val },
+      { new: true }
+    );
+
+    if (!recogida) {
+      return res.status(404).json({ error: 'No se puede valorar. La recogida no existe, no está completada o ya fue valorada.' });
+    }
+
+    return res.status(200).json({ success: true, data: { id: recogida._id, valoracion: recogida.valoracion } });
+
+  } catch (error) {
+    console.error('Error al valorar recogida:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

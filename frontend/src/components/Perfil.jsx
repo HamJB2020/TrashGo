@@ -61,7 +61,7 @@ export default function Perfil({ user, onLogout }) {
   return (
     <div className="min-h-screen bg-fondo py-12 px-4">
       <div className="max-w-lg mx-auto">
-        <Link to="/dashboard" className="text-sm text-gray-400 hover:text-bosque-600 transition inline-block mb-4">&larr; Volver al panel</Link>
+        <Link to="/" className="text-sm text-gray-400 hover:text-bosque-600 transition inline-block mb-4">&larr; Volver</Link>
         <div className="bg-white rounded-lg shadow-xl p-6 md:p-8">
           <h1 className="text-2xl font-bold text-bosque-800 mb-6">Mi Perfil</h1>
 
@@ -130,10 +130,6 @@ export default function Perfil({ user, onLogout }) {
             />
           )}
 
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <Link to="/dashboard" className="text-sm text-bosque-600 hover:text-bosque-700 transition">Ir al panel de solicitudes</Link>
-          </div>
-
           <div className="mt-6 pt-4 border-t border-red-200">
             <button onClick={() => setShowDeleteConfirm(true)} className="w-full border-2 border-red-500 text-red-600 font-semibold py-2.5 rounded-lg hover:bg-red-50 transition text-sm">
               Eliminar mi cuenta
@@ -145,9 +141,7 @@ export default function Perfil({ user, onLogout }) {
               mensaje="¿Estás seguro? Esta acción no se puede deshacer."
               confirmText="Eliminar"
               onConfirm={async () => {
-                try {
-                  await api.delete('/auth/perfil');
-                } catch {}
+                try { await api.delete('/auth/perfil'); } catch {}
                 localStorage.removeItem('token');
                 localStorage.removeItem('usuario');
                 onLogout();

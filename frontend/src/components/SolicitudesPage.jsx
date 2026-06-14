@@ -75,6 +75,7 @@ export default function SolicitudesPage() {
   const [confirmPagar, setConfirmPagar] = useState(null);
   const [reagendarId, setReagendarId] = useState(null);
   const [reagendarFecha, setReagendarFecha] = useState('');
+  const [confirmReagendar, setConfirmReagendar] = useState(null);
   const cargando = useRef(false);
   const enviando = useRef(false);
 
@@ -108,7 +109,7 @@ export default function SolicitudesPage() {
 
   const handleValorar = async (id, valoracion) => {
     try {
-      await api.put(`/recogidas/${id}/completar`, { valoracion });
+      await api.put(`/recogidas/${id}/valorar`, { valoracion });
       setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, valoracion } : s));
       showToast(setToasts, 'Valoración guardada', 'success');
     } catch {
@@ -117,15 +118,19 @@ export default function SolicitudesPage() {
   };
 
   const handleReagendar = async (id) => {
-    if (!reagendarFecha) return;
+    if (enviando.current) return;
+    enviando.current = true;
     try {
-      await api.put(`/recogidas/${id}/reagendar`, { fechaProgramada: new Date(reagendarFecha).toISOString() });
-      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, fecha_programada: new Date(reagendarFecha).toISOString() } : s));
-      showToast(setToasts, 'Fecha reagendada correctamente', 'success');
+      const res = await api.put(`/recogidas/${id}/reagendar`, { fechaProgramada: new Date(reagendarFecha).toISOString() });
+      const nuevoCoste = res.data.data?.coste;
+      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, fecha_programada: new Date(reagendarFecha).toISOString(), coste: nuevoCoste || s.coste } : s));
+      showToast(setToasts, 'Fecha reagendada. Nuevo coste: ' + (nuevoCoste || 0).toFixed(2) + ' €', 'success');
       setReagendarId(null);
       setReagendarFecha('');
     } catch {
       showToast(setToasts, 'Error al reagendar', 'error');
+    } finally {
+      enviando.current = false;
     }
   };
 
@@ -313,7 +318,7 @@ export default function SolicitudesPage() {
                   <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center gap-3">
                     <input type="date" value={reagendarFecha} min={minDate} onChange={e => setReagendarFecha(e.target.value)}
                       className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500" />
-                    <button onClick={() => handleReagendar(sol.id)} disabled={!reagendarFecha}
+                    <button onClick={() => { if (reagendarFecha) setConfirmReagendar(sol); }} disabled={!reagendarFecha}
                       className="px-4 py-2 text-sm bg-bosque-600 text-white font-semibold rounded-lg hover:bg-bosque-700 transition disabled:opacity-50">
                       Guardar
                     </button>
@@ -349,6 +354,15 @@ export default function SolicitudesPage() {
           confirmText="Sí, cancelar"
           onConfirm={() => { handleCancelar(confirmCancel.id); setConfirmCancel(null); }}
           onCancel={() => setConfirmCancel(null)}
+        />
+      )}
+      {confirmReagendar && (
+        <ConfirmModal
+          mensaje={`¿Reagendar para el ${new Date(reagendarFecha).toLocaleDateString('es-ES')}? El coste pasará de ${confirmReagendar.coste.toFixed(2)} € a ${(confirmReagendar.coste * 1.3).toFixed(2)} € (+30%).`}
+          confirmText="Sí, reagendar"
+          confirmBg="bg-bosque-600 hover:bg-bosque-700"
+          onConfirm={() => { handleReagendar(confirmReagendar.id); setConfirmReagendar(null); }}
+          onCancel={() => setConfirmReagendar(null)}
         />
       )}
     </div>
