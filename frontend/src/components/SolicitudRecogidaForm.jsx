@@ -92,8 +92,8 @@ const MULTIPLICADOR_URGENCIA = { normal: 1.0, alta: 1.25 };
 
 function calcularCoste(tipos, cuando, urgencia, peso) {
   if (!Array.isArray(tipos) || tipos.length === 0) return 0;
-  const totalKg = tipos.reduce((sum, t) => sum + (PRECIOS_MATERIAL[t] || 0), 0) * (peso || 1);
-  return totalKg * (MULTIPLICADOR_CUANDO[cuando] || 1) * (MULTIPLICADOR_URGENCIA[urgencia] || 1);
+  const maxPrecio = Math.max(...tipos.map(t => PRECIOS_MATERIAL[t] || 0));
+  return maxPrecio * (peso || 1) * (MULTIPLICADOR_CUANDO[cuando] || 1) * (MULTIPLICADOR_URGENCIA[urgencia] || 1);
 }
 
 export default function SolicitudRecogidaForm({ simple, onSuccess, initialCalle }) {
@@ -422,7 +422,7 @@ export default function SolicitudRecogidaForm({ simple, onSuccess, initialCalle 
                   <span className="text-2xl font-bold text-bosque-800">{calcularCoste(formData.tipoResiduo, cuando, formData.urgencia, formData.peso).toFixed(2)} €</span>
                 </div>
                 <div className="text-xs text-gray-500 mt-2 space-y-1">
-                  <p>{formData.tipoResiduo.map(t => `${t} (${PRECIOS_MATERIAL[t]}€/kg × ${formData.peso} kg = ${(PRECIOS_MATERIAL[t] * formData.peso).toFixed(2)}€)`).join(', ')}</p>
+                  <p>{formData.tipoResiduo.map(t => `${t} (${PRECIOS_MATERIAL[t]}€/kg)`).join(', ')} — Precio más caro: {Math.max(...formData.tipoResiduo.map(t => PRECIOS_MATERIAL[t] || 0)).toFixed(2)}€/kg × {formData.peso} kg</p>
                   <p>Cuándo: {cuando === 'hoy' ? 'Hoy (×1.3)' : cuando === 'manana' ? 'Mañana (×1.15)' : 'Programado (×1.0)'} | Urgencia: {formData.urgencia === 'normal' ? 'Normal (×1.0)' : 'Alta (×1.25)'}</p>
                 </div>
               </div>

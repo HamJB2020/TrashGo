@@ -1,6 +1,9 @@
 *.md
 *.sh
 !README.md
+.env
+.env.local
+node_modules/
 frontend.rar
 .gitignore
 frontend.zip
