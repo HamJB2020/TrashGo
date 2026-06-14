@@ -80,8 +80,8 @@ export default function Login({ onLogin }) {
             </div>
 
             <button type="submit" disabled={isLoading}
-              className="w-full bg-bosque-600 text-white font-bold py-3 rounded-lg hover:bg-bosque-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+              className="w-full bg-bosque-600 text-white font-bold py-3 rounded-lg hover:bg-bosque-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+              {isLoading ? <><svg className="animate-spin h-5 w-5" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg> Iniciando sesión...</> : 'Iniciar sesión'}
             </button>
           </form>
         </div>

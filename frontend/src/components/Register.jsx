@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import Swal from 'sweetalert2';
 import ToastContainer, { showToast } from './Toast';
 
 const PAISES = [
@@ -86,7 +87,8 @@ export default function Register() {
       await api.post('/auth/register', payload);
       showToast(setToasts, 'Registrado correctamente. Redirigiendo...', 'success');
       setSuccessMessage('Registrado correctamente. Redirigiendo al inicio de sesión...');
-      setTimeout(() => navigate('/login'), 3000);
+      Swal.fire({ icon: 'success', title: 'Registrado', text: 'Redirigiendo al inicio de sesión...', timer: 2500, showConfirmButton: false });
+      setTimeout(() => navigate('/login'), 2500);
     } catch (error) {
       console.error('Error al registrar usuario:', error);
       if (error.response?.data?.message) setErrorMessage(error.response.data.message);
