@@ -11,6 +11,7 @@ export default function Perfil({ user, onLogout }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState({ nombre: '', telefono: '', pais: '', calle: '' });
 
   useEffect(() => {
@@ -132,6 +133,29 @@ export default function Perfil({ user, onLogout }) {
           <div className="mt-6 pt-4 border-t border-gray-200">
             <Link to="/dashboard" className="text-sm text-bosque-600 hover:text-bosque-700 transition">Ir al panel de solicitudes</Link>
           </div>
+
+          <div className="mt-6 pt-4 border-t border-red-200">
+            <button onClick={() => setShowDeleteConfirm(true)} className="w-full border-2 border-red-500 text-red-600 font-semibold py-2.5 rounded-lg hover:bg-red-50 transition text-sm">
+              Eliminar mi cuenta
+            </button>
+          </div>
+
+          {showDeleteConfirm && (
+            <ConfirmModal
+              mensaje="¿Estás seguro? Esta acción no se puede deshacer."
+              confirmText="Eliminar"
+              onConfirm={async () => {
+                try {
+                  await api.delete('/auth/perfil');
+                } catch {}
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario');
+                onLogout();
+                navigate('/');
+              }}
+              onCancel={() => setShowDeleteConfirm(false)}
+            />
+          )}
         </div>
       </div>
     </div>

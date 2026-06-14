@@ -15,7 +15,8 @@ const recogidaSchema = new mongoose.Schema({
   fecha_programada: { type: Date },
   coste: { type: Number, default: 0 },
   pagado: { type: Boolean, default: false },
-  peso: { type: Number, default: 1 }
+  peso: { type: Number, default: 1 },
+  valoracion: { type: Number, min: 1, max: 5, default: null }
 }, { timestamps: { createdAt: 'fecha_creacion', updatedAt: 'fecha_actualizacion' } });
 
 module.exports = mongoose.model('Recogida', recogidaSchema);

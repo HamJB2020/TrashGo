@@ -156,6 +156,15 @@ export default function SolicitudRecogidaForm({ simple, onSuccess, initialCalle 
   useEffect(() => {
     if (initialCalle) {
       setFormData(prev => ({ ...prev, calle: initialCalle }));
+      (async () => {
+        const result = await geocodeAddress(initialCalle);
+        if (result) {
+          setPosicion([result.lat, result.lng]);
+          setFormData(prev => ({ ...prev, calle: result.calle, ciudad: result.ciudad || prev.ciudad, pais: result.pais || prev.pais }));
+          direccionVerificada.current = true;
+          setErrors(prev => ({ ...prev, direccion: '' }));
+        }
+      })();
     }
   }, [initialCalle]);
 

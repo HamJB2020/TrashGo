@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Recogida = require('../models/Recogida');
 const Auditoria = require('../models/Auditoria');
+const Notificacion = require('../models/Notificacion');
 
 exports.crearRecogida = async (req, res) => {
   try {
@@ -85,6 +86,53 @@ exports.pagarRecogida = async (req, res) => {
     return res.status(200).json({ success: true, data: { id: recogida._id, pagado: true } });
   } catch (error) {
     console.error('Error al procesar pago:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+exports.historialPagos = async (req, res) => {
+  try {
+    const recogidas = await Recogida.find({ usuario_id: req.user.id, pagado: true })
+      .sort({ fecha_creacion: -1 })
+      .lean();
+
+    const data = recogidas.map(r => ({
+      id: r._id,
+      direccion: r.direccion,
+      tipo_residuo: r.tipo_residuo,
+      coste: r.coste,
+      peso: r.peso,
+      fecha_creacion: r.fecha_creacion,
+      estado: r.estado
+    }));
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error('Error al obtener historial de pagos:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+exports.reagendar = async (req, res) => {
+  try {
+    const { fechaProgramada } = req.body;
+    if (!fechaProgramada) {
+      return res.status(400).json({ error: 'fechaProgramada es requerida' });
+    }
+
+    const recogida = await Recogida.findOneAndUpdate(
+      { _id: req.params.id, usuario_id: req.user.id, estado: 'pendiente', pagado: false },
+      { fecha_programada: fechaProgramada },
+      { new: true }
+    );
+
+    if (!recogida) {
+      return res.status(404).json({ error: 'Recogida no encontrada o no se puede reagendar' });
+    }
+
+    return res.status(200).json({ success: true, data: { id: recogida._id, fecha_programada: recogida.fecha_programada } });
+  } catch (error) {
+    console.error('Error al reagendar recogida:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
@@ -211,6 +259,16 @@ exports.aceptarRecogida = async (req, res) => {
       return res.status(409).json({ error: 'Recogida no disponible (ya fue aceptada)' });
     }
 
+    if (recogida.usuario_id) {
+      const tipoLabel = Array.isArray(recogida.tipo_residuo) ? recogida.tipo_residuo.join(', ') : recogida.tipo_residuo;
+      await Notificacion.create({
+        usuario_id: recogida.usuario_id,
+        tipo: 'recogida_aceptada',
+        mensaje: `Tu solicitud de ${tipoLabel} ha sido aceptada por un rider`,
+        referencia_id: recogida._id
+      });
+    }
+
     return res.status(200).json({
       success: true,
       data: { id: recogida._id, estado: recogida.estado, rider_id: recogida.rider_id }
@@ -260,9 +318,18 @@ exports.misAceptadas = async (req, res) => {
 
 exports.completarRecogida = async (req, res) => {
   try {
+    const update = { estado: 'completada' };
+    if (req.body.valoracion !== undefined) {
+      const val = Number(req.body.valoracion);
+      if (val < 1 || val > 5) {
+        return res.status(400).json({ error: 'La valoración debe estar entre 1 y 5' });
+      }
+      update.valoracion = val;
+    }
+
     const recogida = await Recogida.findOneAndUpdate(
       { _id: req.params.id, rider_id: req.user.id, estado: 'aceptada' },
-      { estado: 'completada' },
+      update,
       { new: true }
     );
 
@@ -270,9 +337,19 @@ exports.completarRecogida = async (req, res) => {
       return res.status(404).json({ error: 'Recogida no encontrada o no puedes completarla' });
     }
 
+    if (recogida.usuario_id) {
+      const tipoLabel = Array.isArray(recogida.tipo_residuo) ? recogida.tipo_residuo.join(', ') : recogida.tipo_residuo;
+      await Notificacion.create({
+        usuario_id: recogida.usuario_id,
+        tipo: 'recogida_completada',
+        mensaje: `Tu recogida de ${tipoLabel} ha sido completada`,
+        referencia_id: recogida._id
+      });
+    }
+
     return res.status(200).json({
       success: true,
-      data: { id: recogida._id, estado: recogida.estado }
+      data: { id: recogida._id, estado: recogida.estado, valoracion: recogida.valoracion }
     });
 
   } catch (error) {

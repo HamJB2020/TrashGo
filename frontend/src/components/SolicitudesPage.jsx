@@ -49,13 +49,32 @@ function CuentaAtras({ fecha }) {
   return <span className={`text-base font-mono font-bold ${texto.includes('Ya') ? 'text-red-600' : 'text-bosque-700'}`}>{texto}</span>;
 }
 
+function StarRating({ value, onChange, readonly }) {
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button key={star} type="button" disabled={readonly}
+          onClick={() => onChange && onChange(star)}
+          className={`text-xl transition ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'} ${star <= value ? 'text-yellow-400' : 'text-gray-300'}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function SolicitudesPage() {
+  const [tab, setTab] = useState('solicitudes');
   const [solicitudes, setSolicitudes] = useState([]);
+  const [pagos, setPagos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagarSolicitud, setPagarSolicitud] = useState(null);
   const [toasts, setToasts] = useState([]);
   const [confirmCancel, setConfirmCancel] = useState(null);
   const [confirmPagar, setConfirmPagar] = useState(null);
+  const [reagendarId, setReagendarId] = useState(null);
+  const [reagendarFecha, setReagendarFecha] = useState('');
   const cargando = useRef(false);
   const enviando = useRef(false);
 
@@ -87,6 +106,29 @@ export default function SolicitudesPage() {
     }
   };
 
+  const handleValorar = async (id, valoracion) => {
+    try {
+      await api.put(`/recogidas/${id}/completar`, { valoracion });
+      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, valoracion } : s));
+      showToast(setToasts, 'Valoración guardada', 'success');
+    } catch {
+      showToast(setToasts, 'Error al guardar valoración', 'error');
+    }
+  };
+
+  const handleReagendar = async (id) => {
+    if (!reagendarFecha) return;
+    try {
+      await api.put(`/recogidas/${id}/reagendar`, { fechaProgramada: new Date(reagendarFecha).toISOString() });
+      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, fecha_programada: new Date(reagendarFecha).toISOString() } : s));
+      showToast(setToasts, 'Fecha reagendada correctamente', 'success');
+      setReagendarId(null);
+      setReagendarFecha('');
+    } catch {
+      showToast(setToasts, 'Error al reagendar', 'error');
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (cargando.current) return;
@@ -106,6 +148,20 @@ export default function SolicitudesPage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (tab === 'pagos') {
+      const fetchPagos = async () => {
+        try {
+          const res = await api.get('/recogidas/historial-pagos');
+          setPagos(res.data.data || []);
+        } catch {
+          setPagos([]);
+        }
+      };
+      fetchPagos();
+    }
+  }, [tab]);
+
   const estadoBadge = (estado) => {
     const map = {
       pendiente: 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -115,6 +171,10 @@ export default function SolicitudesPage() {
     };
     return map[estado] || map.pendiente;
   };
+
+  const manana = new Date();
+  manana.setDate(manana.getDate() + 1);
+  const minDate = manana.toISOString().split('T')[0];
 
   if (loading) return (
     <div className="min-h-screen bg-fondo flex items-center justify-center">
@@ -127,14 +187,60 @@ export default function SolicitudesPage() {
       <ToastContainer toasts={toasts} />
       <div className="max-w-4xl mx-auto">
         <Link to="/dashboard" className="text-sm text-gray-400 hover:text-bosque-600 transition inline-block mb-4">&larr; Volver al panel</Link>
-        <h1 className="text-3xl font-bold text-bosque-800 mb-6">Mis solicitudes ({solicitudes.length})</h1>
 
-        {solicitudes.length === 0 ? (
+        <div className="flex gap-2 mb-6">
+          <button onClick={() => setTab('solicitudes')}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition ${tab === 'solicitudes' ? 'bg-bosque-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:border-bosque-500'}`}
+          >
+            Mis solicitudes ({solicitudes.length})
+          </button>
+          <button onClick={() => setTab('pagos')}
+            className={`px-5 py-2 rounded-lg text-sm font-semibold transition ${tab === 'pagos' ? 'bg-bosque-600 text-white' : 'bg-white text-gray-600 border border-gray-300 hover:border-bosque-500'}`}
+          >
+            Pagos realizados ({pagos.length})
+          </button>
+        </div>
+
+        {tab === 'pagos' && (
+          <div className="space-y-4">
+            {pagos.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-xl p-8 text-center">
+                <p className="text-gray-400 text-lg">No hay pagos realizados.</p>
+              </div>
+            ) : (
+              pagos.map(p => (
+                <div key={p.id} className="bg-white rounded-lg shadow-xl p-6 border border-gray-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold px-3 py-1 rounded-full border bg-green-100 text-green-800 border-green-300 flex items-center gap-1.5">✓ Pagado</span>
+                    </div>
+                    {p.coste != null && <span className="text-xl font-bold text-bosque-700">{p.coste.toFixed(2)} €</span>}
+                  </div>
+                  <p className="text-base text-gray-800 font-semibold">{Array.isArray(p.tipo_residuo) ? p.tipo_residuo.join(', ') : p.tipo_residuo}</p>
+                  <div className="flex items-center gap-2 mt-2 text-base text-gray-500">
+                    <span>📍</span>
+                    <span>{p.direccion}</span>
+                  </div>
+                  {p.peso && <p className="text-sm text-gray-400 mt-1">Peso: {p.peso} kg</p>}
+                  {p.fecha_creacion && (
+                    <p className="text-sm text-gray-400 mt-1">
+                      {new Date(p.fecha_creacion).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
+        {tab === 'solicitudes' && solicitudes.length === 0 && (
           <div className="bg-white rounded-lg shadow-xl p-8 text-center">
             <p className="text-gray-400 text-lg">Aún no tienes solicitudes de recogida.</p>
             <Link to="/dashboard" className="text-bosque-600 hover:text-bosque-700 font-semibold mt-4 inline-block">Solicitar una recogida</Link>
           </div>
-        ) : (
+        )}
+
+        {tab === 'solicitudes' && solicitudes.length > 0 && (
           <div className="space-y-6">
             {solicitudes.map((sol) => (
               <div key={sol.id} className="bg-white rounded-lg shadow-xl p-6 border border-gray-200">
@@ -180,10 +286,14 @@ export default function SolicitudesPage() {
                   </div>
                 )}
                 {sol.peso && <p className="text-sm text-gray-400 mt-2">Peso: {sol.peso} kg</p>}
+
                 {sol.estado === 'pendiente' && !sol.pagado && sol.coste > 0 && (
-                  <div className="flex gap-3 mt-4">
+                  <div className="flex flex-wrap gap-3 mt-4">
                     <button onClick={() => setConfirmPagar(sol)} className="flex-1 bg-green-600 text-white font-semibold py-3 rounded-lg hover:bg-green-700 transition text-base">
                       Pagar {sol.coste.toFixed(2)} €
+                    </button>
+                    <button onClick={() => { setReagendarId(sol.id); setReagendarFecha(''); }} className="px-4 py-3 text-base text-bosque-600 border border-bosque-300 rounded-lg hover:bg-bosque-50 transition">
+                      Reagendar
                     </button>
                     <button onClick={() => setConfirmCancel({ id: sol.id, pagado: false })} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                       Cancelar
@@ -191,11 +301,29 @@ export default function SolicitudesPage() {
                   </div>
                 )}
                 {sol.pagado && sol.estado === 'pendiente' && (
-                  <div className="flex gap-3 mt-4 items-center">
+                  <div className="flex flex-wrap gap-3 mt-4 items-center">
                     <span className="text-base text-green-600 font-semibold">✓ Pagado</span>
                     <button onClick={() => setConfirmCancel({ id: sol.id, pagado: true })} className="px-5 py-3 text-base text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                       Cancelar
                     </button>
+                  </div>
+                )}
+
+                {reagendarId === sol.id && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center gap-3">
+                    <input type="date" value={reagendarFecha} min={minDate} onChange={e => setReagendarFecha(e.target.value)}
+                      className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500" />
+                    <button onClick={() => handleReagendar(sol.id)} disabled={!reagendarFecha}
+                      className="px-4 py-2 text-sm bg-bosque-600 text-white font-semibold rounded-lg hover:bg-bosque-700 transition disabled:opacity-50">
+                      Guardar
+                    </button>
+                  </div>
+                )}
+
+                {sol.estado === 'completada' && (
+                  <div className="mt-3 pt-3 border-t border-gray-100">
+                    <p className="text-sm font-semibold text-gray-600 mb-1">Valoración</p>
+                    <StarRating value={sol.valoracion || 0} onChange={sol.valoracion ? undefined : (v) => handleValorar(sol.id, v)} readonly={!!sol.valoracion} />
                   </div>
                 )}
               </div>

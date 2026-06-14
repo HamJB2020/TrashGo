@@ -32,6 +32,7 @@ app.get('/health', (req, res) => {
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/recogidas', require('./routes/recogidas'));
 app.use('/api/contacto', require('./routes/contacto'));
+app.use('/api/notificaciones', require('./routes/notificaciones'));
 
 app.use('*', (req, res) => {
   res.status(404).json({ error: 'Ruta no encontrada' });

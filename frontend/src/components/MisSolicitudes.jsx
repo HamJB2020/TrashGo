@@ -49,6 +49,21 @@ function CuentaAtras({ fecha }) {
   return <span className={`text-sm font-mono font-bold ${texto.includes('Ya') ? 'text-red-600' : 'text-bosque-700'}`}>{texto}</span>;
 }
 
+function StarRating({ value, onChange, readonly }) {
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button key={star} type="button" disabled={readonly}
+          onClick={() => onChange && onChange(star)}
+          className={`text-sm transition ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'} ${star <= value ? 'text-yellow-400' : 'text-gray-300'}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function MisSolicitudes({ refreshKey }) {
   const [solicitudes, setSolicitudes] = useState([]);
   const cargando = useRef(false);
@@ -56,6 +71,8 @@ export default function MisSolicitudes({ refreshKey }) {
   const [toasts, setToasts] = useState([]);
   const [confirmCancel, setConfirmCancel] = useState(null);
   const [confirmPagar, setConfirmPagar] = useState(null);
+  const [reagendarId, setReagendarId] = useState(null);
+  const [reagendarFecha, setReagendarFecha] = useState('');
   const enviando = useRef(false);
 
   const handlePagar = async (id) => {
@@ -83,6 +100,29 @@ export default function MisSolicitudes({ refreshKey }) {
       showToast(setToasts, 'Error al cancelar la solicitud', 'error');
     } finally {
       enviando.current = false;
+    }
+  };
+
+  const handleValorar = async (id, valoracion) => {
+    try {
+      await api.put(`/recogidas/${id}/completar`, { valoracion });
+      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, valoracion } : s));
+      showToast(setToasts, 'Valoración guardada', 'success');
+    } catch {
+      showToast(setToasts, 'Error al guardar valoración', 'error');
+    }
+  };
+
+  const handleReagendar = async (id) => {
+    if (!reagendarFecha) return;
+    try {
+      await api.put(`/recogidas/${id}/reagendar`, { fechaProgramada: new Date(reagendarFecha).toISOString() });
+      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, fecha_programada: new Date(reagendarFecha).toISOString() } : s));
+      showToast(setToasts, 'Fecha reagendada correctamente', 'success');
+      setReagendarId(null);
+      setReagendarFecha('');
+    } catch {
+      showToast(setToasts, 'Error al reagendar', 'error');
     }
   };
 
@@ -114,6 +154,10 @@ export default function MisSolicitudes({ refreshKey }) {
     };
     return map[estado] || map.pendiente;
   };
+
+  const manana = new Date();
+  manana.setDate(manana.getDate() + 1);
+  const minDate = manana.toISOString().split('T')[0];
 
   if (solicitudes.length === 0) {
     return (
@@ -175,9 +219,12 @@ export default function MisSolicitudes({ refreshKey }) {
             )}
             {sol.peso && <p className="text-xs text-gray-400 mt-1">Peso: {sol.peso} kg</p>}
             {sol.estado === 'pendiente' && !sol.pagado && sol.coste > 0 && (
-              <div className="flex gap-2 mt-2">
+              <div className="flex flex-wrap gap-2 mt-2">
                 <button onClick={() => setConfirmPagar(sol)} className="flex-1 bg-green-600 text-white text-xs font-semibold py-2 rounded-lg hover:bg-green-700 transition">
                   Pagar {sol.coste.toFixed(2)} €
+                </button>
+                <button onClick={() => { setReagendarId(sol.id); setReagendarFecha(''); }} className="px-3 text-xs text-bosque-600 border border-bosque-300 rounded-lg hover:bg-bosque-50 transition">
+                  Reagendar
                 </button>
                 <button onClick={() => setConfirmCancel({ id: sol.id, pagado: sol.pagado })} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                   Cancelar
@@ -190,6 +237,24 @@ export default function MisSolicitudes({ refreshKey }) {
                 <button onClick={() => setConfirmCancel({ id: sol.id, pagado: true })} className="px-3 text-xs text-red-600 border border-red-300 rounded-lg hover:bg-red-50 transition">
                   Cancelar
                 </button>
+              </div>
+            )}
+
+            {reagendarId === sol.id && (
+              <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200 flex items-center gap-2">
+                <input type="date" value={reagendarFecha} min={minDate} onChange={e => setReagendarFecha(e.target.value)}
+                  className="flex-1 px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-bosque-500" />
+                <button onClick={() => handleReagendar(sol.id)} disabled={!reagendarFecha}
+                  className="px-3 py-1.5 text-xs bg-bosque-600 text-white font-semibold rounded-lg hover:bg-bosque-700 transition disabled:opacity-50">
+                  Guardar
+                </button>
+              </div>
+            )}
+
+            {sol.estado === 'completada' && (
+              <div className="mt-2 pt-2 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-600 mb-1">Valoración</p>
+                <StarRating value={sol.valoracion || 0} onChange={sol.valoracion ? undefined : (v) => handleValorar(sol.id, v)} readonly={!!sol.valoracion} />
               </div>
             )}
           </div>

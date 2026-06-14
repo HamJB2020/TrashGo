@@ -91,6 +91,19 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
+exports.deleteAccount = async (req, res) => {
+  try {
+    const usuario = await Usuario.findByIdAndDelete(req.user.id);
+    if (!usuario) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    return res.status(200).json({ success: true, message: 'Cuenta eliminada correctamente' });
+  } catch (error) {
+    console.error('Error al eliminar cuenta:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;

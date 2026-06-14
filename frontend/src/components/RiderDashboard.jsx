@@ -27,6 +27,7 @@ export default function RiderDashboard() {
   const [miPais, setMiPais] = useState('');
   const [verOtros, setVerOtros] = useState(false);
   const [otrasCount, setOtrasCount] = useState(0);
+  const [tipoFiltro, setTipoFiltro] = useState('');
 
   useEffect(() => {
     api.get('/auth/perfil').then(r => {
@@ -37,6 +38,7 @@ export default function RiderDashboard() {
   const fetchDisponibles = async () => {
     try {
       const params = verOtros ? {} : { pais: miPais };
+      if (tipoFiltro) params.tipoResiduo = tipoFiltro;
       const res = await api.get('/recogidas/disponibles', { params });
       setDisponibles(res.data.data || []);
       setOtrasCount(res.data.otrasCount || 0);
@@ -61,7 +63,7 @@ export default function RiderDashboard() {
     load();
     const id = setInterval(load, 15000);
     return () => clearInterval(id);
-  }, [miPais, verOtros]);
+  }, [miPais, verOtros, tipoFiltro]);
 
   useEffect(() => {
     if (tab === 'aceptadas') fetchAceptadas();
@@ -137,6 +139,23 @@ export default function RiderDashboard() {
             >
               {verOtros ? 'Mostrar solo mi país' : `Ver solicitudes de otros países (${otrasCount})`}
             </button>
+          </div>
+        )}
+
+        {tab === 'disponibles' && (
+          <div className="mb-4 flex flex-wrap gap-1.5">
+            <button onClick={() => setTipoFiltro('')}
+              className={`text-xs px-3 py-1.5 rounded-full border transition font-semibold ${tipoFiltro === '' ? 'bg-bosque-600 text-white border-bosque-600' : 'bg-white text-gray-600 border-gray-300 hover:border-bosque-500'}`}
+            >
+              Todos
+            </button>
+            {['orgánico','inorgánico','vidrio','plástico','papel/cartón','metal','electrónico','madera','textil','pilas/baterías','aceite','escombros','poda/jardín','voluminoso','especial','mixto'].map(t => (
+              <button key={t} onClick={() => setTipoFiltro(t)}
+                className={`text-xs px-3 py-1.5 rounded-full border transition font-semibold ${tipoFiltro === t ? 'bg-bosque-600 text-white border-bosque-600' : 'bg-white text-gray-600 border-gray-300 hover:border-bosque-500'}`}
+              >
+                {t}
+              </button>
+            ))}
           </div>
         )}
 

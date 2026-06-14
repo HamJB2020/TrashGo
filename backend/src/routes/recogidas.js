@@ -10,6 +10,10 @@ router.post('/', recogidaController.crearRecogida);
 
 router.use(verifyToken);
 
+router.get('/historial-pagos', recogidaController.historialPagos);
+
+router.put('/:id/reagendar', recogidaController.reagendar);
+
 router.get('/mis-recogidas', recogidaController.obtenerMisRecogidas);
 
 router.get('/mis-aceptadas', recogidaController.misAceptadas);
