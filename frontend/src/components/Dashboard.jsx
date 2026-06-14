@@ -7,6 +7,7 @@ import MisSolicitudes from './MisSolicitudes';
 export default function Dashboard({ user }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [miCalle, setMiCalle] = useState('');
+  const [casaKey, setCasaKey] = useState(0);
   const formRef = useRef(null);
   const solicitudesRef = useRef(null);
 
@@ -21,6 +22,11 @@ export default function Dashboard({ user }) {
     setTimeout(() => {
       solicitudesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 300);
+  };
+
+  const usarMiCasa = () => {
+    setCasaKey(k => k + 1);
+    formRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const esRider = user?.rol === 'rider';
@@ -42,7 +48,7 @@ export default function Dashboard({ user }) {
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="flex-1">
               {miCalle && (
-                <button onClick={() => { setMiCalle(miCalle); formRef.current?.scrollIntoView({ behavior: 'smooth' }); }}
+                <button onClick={usarMiCasa}
                   className="mb-4 flex items-center gap-2 bg-white border border-bosque-300 text-bosque-700 px-4 py-2.5 rounded-xl hover:bg-bosque-50 transition shadow-sm"
                 >
                   <span className="w-10 h-10 rounded-full bg-bosque-100 flex items-center justify-center text-lg">🏠</span>
@@ -53,7 +59,7 @@ export default function Dashboard({ user }) {
                 </button>
               )}
               <div ref={formRef}>
-                <SolicitudRecogidaForm simple onSuccess={handleSuccess} initialCalle={miCalle} />
+                <SolicitudRecogidaForm key={casaKey} simple onSuccess={handleSuccess} initialCalle={miCalle} />
               </div>
             </div>
             <div className="w-full lg:w-80 flex-shrink-0" ref={solicitudesRef}>
