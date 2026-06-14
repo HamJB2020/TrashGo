@@ -327,13 +327,6 @@ exports.misAceptadas = async (req, res) => {
 exports.completarRecogida = async (req, res) => {
   try {
     const update = { estado: 'completada' };
-    if (req.body.valoracion !== undefined) {
-      const val = Number(req.body.valoracion);
-      if (val < 1 || val > 5) {
-        return res.status(400).json({ error: 'La valoración debe estar entre 1 y 5' });
-      }
-      update.valoracion = val;
-    }
 
     const recogida = await Recogida.findOneAndUpdate(
       { _id: req.params.id, rider_id: req.user.id, estado: 'aceptada' },
@@ -357,7 +350,7 @@ exports.completarRecogida = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: { id: recogida._id, estado: recogida.estado, valoracion: recogida.valoracion }
+      data: { id: recogida._id, estado: recogida.estado }
     });
 
   } catch (error) {
@@ -383,27 +376,3 @@ exports.cancelarRecogida = async (req, res) => {
   }
 };
 
-exports.valorarRecogida = async (req, res) => {
-  try {
-    const val = Number(req.body.valoracion);
-    if (val < 1 || val > 5) {
-      return res.status(400).json({ error: 'La valoración debe estar entre 1 y 5' });
-    }
-
-    const recogida = await Recogida.findOneAndUpdate(
-      { _id: req.params.id, usuario_id: req.user.id, estado: 'completada', valoracion: null },
-      { valoracion: val },
-      { new: true }
-    );
-
-    if (!recogida) {
-      return res.status(404).json({ error: 'No se puede valorar. La recogida no existe, no está completada o ya fue valorada.' });
-    }
-
-    return res.status(200).json({ success: true, data: { id: recogida._id, valoracion: recogida.valoracion } });
-
-  } catch (error) {
-    console.error('Error al valorar recogida:', error);
-    return res.status(500).json({ error: 'Error interno del servidor' });
-  }
-};

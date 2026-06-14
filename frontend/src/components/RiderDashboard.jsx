@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import L from 'leaflet';
@@ -28,6 +28,10 @@ export default function RiderDashboard() {
   const [verOtros, setVerOtros] = useState(false);
   const [otrasCount, setOtrasCount] = useState(0);
   const [tipoFiltro, setTipoFiltro] = useState('');
+  const [incidenciaAbierta, setIncidenciaAbierta] = useState(null);
+  const [incidenciaTexto, setIncidenciaTexto] = useState('');
+  const [incidenciasReportadas, setIncidenciasReportadas] = useState({});
+  const enviando = useRef(false);
 
   useEffect(() => {
     api.get('/auth/perfil').then(r => {
@@ -99,6 +103,22 @@ export default function RiderDashboard() {
       completada: 'bg-green-100 text-green-800 border-green-300',
     };
     return map[estado] || 'bg-gray-100 text-gray-800';
+  };
+
+  const handleReportarIncidencia = async (id) => {
+    if (!incidenciaTexto.trim() || enviando.current) return;
+    enviando.current = true;
+    try {
+      await api.post('/incidencias', { recogidaId: id, descripcion: incidenciaTexto.trim() });
+      setIncidenciasReportadas(prev => ({ ...prev, [id]: true }));
+      setIncidenciaAbierta(null);
+      setIncidenciaTexto('');
+      showToast(setToasts, 'Incidencia reportada correctamente', 'success');
+    } catch (err) {
+      showToast(setToasts, err.response?.data?.error || 'Error al reportar incidencia', 'error');
+    } finally {
+      enviando.current = false;
+    }
   };
 
   if (loading && !miPais) return (
@@ -217,6 +237,20 @@ export default function RiderDashboard() {
                     className="mt-3 w-full bg-green-600 text-white text-sm font-semibold py-2 rounded-lg hover:bg-green-700 transition">
                     Marcar como completada
                   </button>
+                )}
+                {sol.estado === 'completada' && (
+                  <div className="mt-2 pt-2 border-t border-gray-100">
+                    {incidenciasReportadas[sol.id] ? (
+                      <p className="text-xs text-green-600 font-semibold">✓ Incidencia reportada</p>
+                    ) : incidenciaAbierta === sol.id ? (
+                      <div className="flex flex-col gap-2">
+                        <textarea value={incidenciaTexto} onChange={e => setIncidenciaTexto(e.target.value)} placeholder="Describe qué pasó..." rows={2} className="w-full text-xs border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bosque-500 resize-none" />
+                        <button onClick={() => handleReportarIncidencia(sol.id)} disabled={!incidenciaTexto.trim()} className="self-end px-3 py-1.5 text-xs bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50">Enviar</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setIncidenciaAbierta(sol.id); setIncidenciaTexto(''); }} className="text-xs text-red-600 border border-red-300 rounded-lg px-3 py-1.5 hover:bg-red-50 transition">Reportar incidencia</button>
+                    )}
+                  </div>
                 )}
               </div>
             ))}

@@ -49,21 +49,6 @@ function CuentaAtras({ fecha }) {
   return <span className={`text-base font-mono font-bold ${texto.includes('Ya') ? 'text-red-600' : 'text-bosque-700'}`}>{texto}</span>;
 }
 
-function StarRating({ value, onChange, readonly }) {
-  return (
-    <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map(star => (
-        <button key={star} type="button" disabled={readonly}
-          onClick={() => onChange && onChange(star)}
-          className={`text-xl transition ${readonly ? 'cursor-default' : 'cursor-pointer hover:scale-110'} ${star <= value ? 'text-yellow-400' : 'text-gray-300'}`}
-        >
-          ★
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export default function SolicitudesPage() {
   const [tab, setTab] = useState('solicitudes');
   const [solicitudes, setSolicitudes] = useState([]);
@@ -76,6 +61,9 @@ export default function SolicitudesPage() {
   const [reagendarId, setReagendarId] = useState(null);
   const [reagendarFecha, setReagendarFecha] = useState('');
   const [confirmReagendar, setConfirmReagendar] = useState(null);
+  const [incidenciaAbierta, setIncidenciaAbierta] = useState(null);
+  const [incidenciaTexto, setIncidenciaTexto] = useState('');
+  const [incidenciasReportadas, setIncidenciasReportadas] = useState({});
   const cargando = useRef(false);
   const enviando = useRef(false);
 
@@ -107,13 +95,19 @@ export default function SolicitudesPage() {
     }
   };
 
-  const handleValorar = async (id, valoracion) => {
+  const handleReportarIncidencia = async (id) => {
+    if (!incidenciaTexto.trim() || enviando.current) return;
+    enviando.current = true;
     try {
-      await api.put(`/recogidas/${id}/valorar`, { valoracion });
-      setSolicitudes(prev => prev.map(s => s.id === id ? { ...s, valoracion } : s));
-      showToast(setToasts, 'Valoración guardada', 'success');
-    } catch {
-      showToast(setToasts, 'Error al guardar valoración', 'error');
+      await api.post('/incidencias', { recogidaId: id, descripcion: incidenciaTexto.trim() });
+      setIncidenciasReportadas(prev => ({ ...prev, [id]: true }));
+      setIncidenciaAbierta(null);
+      setIncidenciaTexto('');
+      showToast(setToasts, 'Incidencia reportada correctamente', 'success');
+    } catch (err) {
+      showToast(setToasts, err.response?.data?.error || 'Error al reportar incidencia', 'error');
+    } finally {
+      enviando.current = false;
     }
   };
 
@@ -327,8 +321,16 @@ export default function SolicitudesPage() {
 
                 {sol.estado === 'completada' && (
                   <div className="mt-3 pt-3 border-t border-gray-100">
-                    <p className="text-sm font-semibold text-gray-600 mb-1">Valoración</p>
-                    <StarRating value={sol.valoracion || 0} onChange={sol.valoracion ? undefined : (v) => handleValorar(sol.id, v)} readonly={!!sol.valoracion} />
+                    {incidenciasReportadas[sol.id] ? (
+                      <p className="text-xs text-green-600 font-semibold">✓ Incidencia reportada</p>
+                    ) : incidenciaAbierta === sol.id ? (
+                      <div className="flex flex-col gap-2">
+                        <textarea value={incidenciaTexto} onChange={e => setIncidenciaTexto(e.target.value)} placeholder="Describe qué pasó..." rows={2} className="w-full text-sm border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-bosque-500 resize-none" />
+                        <button onClick={() => handleReportarIncidencia(sol.id)} disabled={!incidenciaTexto.trim()} className="self-end px-4 py-2 text-sm bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition disabled:opacity-50">Enviar</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setIncidenciaAbierta(sol.id); setIncidenciaTexto(''); }} className="text-sm text-red-600 border border-red-300 rounded-lg px-4 py-2 hover:bg-red-50 transition">Reportar incidencia</button>
+                    )}
                   </div>
                 )}
               </div>

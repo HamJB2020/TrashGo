@@ -28,6 +28,4 @@ router.put('/:id/pagar', recogidaController.pagarRecogida);
 
 router.put('/:id/cancelar', recogidaController.cancelarRecogida);
 
-router.put('/:id/valorar', recogidaController.valorarRecogida);
-
 module.exports = router;
